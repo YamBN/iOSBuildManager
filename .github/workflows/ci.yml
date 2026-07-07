@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify generated project is in sync
+        run: |
+          python3 scripts/generate_pbxproj.py
+          git diff --exit-code -- iOSBuildManager/iOSBuildManager.xcodeproj
+
+      - name: Build (Release)
+        run: |
+          xcodebuild -project iOSBuildManager/iOSBuildManager.xcodeproj \
+            -scheme iOSBuildManager -configuration Release build
+
+      - name: Test
+        run: |
+          xcodebuild -project iOSBuildManager/iOSBuildManager.xcodeproj \
+            -scheme iOSBuildManager -configuration Debug test
