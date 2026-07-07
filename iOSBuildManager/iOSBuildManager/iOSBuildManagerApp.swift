@@ -24,7 +24,10 @@ struct iOSBuildManagerApp: App {
     @StateObject private var model = AppModel()
 
     var body: some Scene {
-        WindowGroup {
+        // A single identified Window (not a WindowGroup) so the menu bar item
+        // can reopen it after the user closes it. Closing the window does not
+        // quit the app — it keeps running for scheduled builds and the menu bar.
+        Window("iOS Build Manager", id: "main") {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(model.settings)
@@ -49,6 +52,23 @@ struct iOSBuildManagerApp: App {
                 }
                 .keyboardShortcut("b", modifiers: .command)
             }
+        }
+
+        MenuBarExtra(
+            "iOS Build Manager",
+            systemImage: "shippingbox.fill",
+            isInserted: Binding(
+                get: { model.settings.settings.showMenuBarIcon },
+                set: { model.settings.settings.showMenuBarIcon = $0 }
+            )
+        ) {
+            MenuBarMenu()
+                .environmentObject(model)
+                .environmentObject(model.settings)
+                .environmentObject(model.projects)
+                .environmentObject(model.history)
+                .environmentObject(model.devices)
+                .environmentObject(model.engine)
         }
     }
 }

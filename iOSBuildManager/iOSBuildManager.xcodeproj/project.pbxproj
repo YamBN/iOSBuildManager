@@ -39,6 +39,7 @@
 		7C04627AABF6E79191945884 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D7F002C65B9C5442DB50754 /* Theme.swift */; };
 		156C6031EB87F4BFE0A9CD0F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 642FB71F1585E4794A08494E /* ContentView.swift */; };
 		B88531B31403C84617E9D9E8 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74FE988F7B833C05D15FF0B6 /* Sidebar.swift */; };
+		89355CB891A54598611C9F68 /* MenuBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E28527116B76AC782390E1B /* MenuBarMenu.swift */; };
 		267B643A870D78E55A6FE876 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D74FC7400EBFFC8283EA5D /* GlassComponents.swift */; };
 		394EEDA48FE61163AC32C3D6 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC86475EE53154B6460BF7B /* EmptyStateView.swift */; };
 		3AD5C0D72AF8C79B7E6EDA99 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4431110C4613C8CBF7D4548C /* DashboardView.swift */; };
@@ -50,6 +51,7 @@
 		F5D3CC98046E985FDA699BE6 /* LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059627158BA319E785E128E6 /* LogsView.swift */; };
 		0D4CE4F89D1E2363A0E29484 /* ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE7A150D3B4D7D9959E68D7 /* ParsingTests.swift */; };
 		3069A67AB1D6DA68FDFBB586 /* PackagingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5789B4715882632149836B6 /* PackagingTests.swift */; };
+		A4F1A97B32DCF5FC9EC61CFF /* AppModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273B7B1CB462B7CD1F66C55A /* AppModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +97,7 @@
 		7D7F002C65B9C5442DB50754 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme.swift"; sourceTree = "<group>"; };
 		642FB71F1585E4794A08494E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
 		74FE988F7B833C05D15FF0B6 /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sidebar.swift"; sourceTree = "<group>"; };
+		9E28527116B76AC782390E1B /* MenuBarMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MenuBarMenu.swift"; sourceTree = "<group>"; };
 		81D74FC7400EBFFC8283EA5D /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlassComponents.swift"; sourceTree = "<group>"; };
 		CFC86475EE53154B6460BF7B /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmptyStateView.swift"; sourceTree = "<group>"; };
 		4431110C4613C8CBF7D4548C /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DashboardView.swift"; sourceTree = "<group>"; };
@@ -109,6 +112,7 @@
 		ED20F7D5B96A503D58430996 /* iOSBuildManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iOSBuildManager.entitlements; sourceTree = "<group>"; };
 		3CE7A150D3B4D7D9959E68D7 /* ParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ParsingTests.swift"; sourceTree = "<group>"; };
 		C5789B4715882632149836B6 /* PackagingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PackagingTests.swift"; sourceTree = "<group>"; };
+		273B7B1CB462B7CD1F66C55A /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppModelTests.swift"; sourceTree = "<group>"; };
 		14F2CDF734D2176A35A777E3 /* iOSBuildManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iOSBuildManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -176,6 +180,7 @@
 				7C04627AABF6E79191945884 /* Theme.swift in Sources */,
 				156C6031EB87F4BFE0A9CD0F /* ContentView.swift in Sources */,
 				B88531B31403C84617E9D9E8 /* Sidebar.swift in Sources */,
+				89355CB891A54598611C9F68 /* MenuBarMenu.swift in Sources */,
 				267B643A870D78E55A6FE876 /* GlassComponents.swift in Sources */,
 				394EEDA48FE61163AC32C3D6 /* EmptyStateView.swift in Sources */,
 				3AD5C0D72AF8C79B7E6EDA99 /* DashboardView.swift in Sources */,
@@ -194,6 +199,7 @@
 			files = (
 				0D4CE4F89D1E2363A0E29484 /* ParsingTests.swift in Sources */,
 				3069A67AB1D6DA68FDFBB586 /* PackagingTests.swift in Sources */,
+				A4F1A97B32DCF5FC9EC61CFF /* AppModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,6 +299,7 @@
 			children = (
 				3CE7A150D3B4D7D9959E68D7,
 				C5789B4715882632149836B6,
+				273B7B1CB462B7CD1F66C55A,
 			);
 			name = "iOSBuildManagerTests"; path = "iOSBuildManagerTests"; sourceTree = "<group>";
 		};
@@ -375,6 +382,7 @@
 			children = (
 				642FB71F1585E4794A08494E,
 				74FE988F7B833C05D15FF0B6,
+				9E28527116B76AC782390E1B,
 				5504FE5F7F8E8C22037D9C20,
 				2A2EAABA34039E93E5CB1772,
 				18CF2C5EAD2E971C82E796B7,

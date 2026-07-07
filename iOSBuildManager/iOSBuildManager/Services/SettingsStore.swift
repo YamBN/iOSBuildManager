@@ -40,9 +40,31 @@ struct AppSettings: Codable, Sendable, Hashable {
     var theme: AppTheme = .dark
     var validateICloudOutput: Bool = true
     var notifyOnBuildComplete: Bool = true
+    var showMenuBarIcon: Bool = true
     var scheduledBuildsEnabled: Bool = false
     var scheduledBuildIntervalDays: Int = 6
     var scheduledProjectId: UUID? = nil
+
+    init() {}
+
+    /// Tolerant decoding: fields added in newer versions fall back to their
+    /// defaults instead of failing the whole file and silently resetting
+    /// every user setting.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = AppSettings()
+        outputURL = try c.decodeIfPresent(URL.self, forKey: .outputURL) ?? defaults.outputURL
+        keepLatestIPA = try c.decodeIfPresent(Bool.self, forKey: .keepLatestIPA) ?? defaults.keepLatestIPA
+        keepBuildHistoryCount = try c.decodeIfPresent(Int.self, forKey: .keepBuildHistoryCount) ?? defaults.keepBuildHistoryCount
+        autoCleanOldBuilds = try c.decodeIfPresent(Bool.self, forKey: .autoCleanOldBuilds) ?? defaults.autoCleanOldBuilds
+        theme = try c.decodeIfPresent(AppTheme.self, forKey: .theme) ?? defaults.theme
+        validateICloudOutput = try c.decodeIfPresent(Bool.self, forKey: .validateICloudOutput) ?? defaults.validateICloudOutput
+        notifyOnBuildComplete = try c.decodeIfPresent(Bool.self, forKey: .notifyOnBuildComplete) ?? defaults.notifyOnBuildComplete
+        showMenuBarIcon = try c.decodeIfPresent(Bool.self, forKey: .showMenuBarIcon) ?? defaults.showMenuBarIcon
+        scheduledBuildsEnabled = try c.decodeIfPresent(Bool.self, forKey: .scheduledBuildsEnabled) ?? defaults.scheduledBuildsEnabled
+        scheduledBuildIntervalDays = try c.decodeIfPresent(Int.self, forKey: .scheduledBuildIntervalDays) ?? defaults.scheduledBuildIntervalDays
+        scheduledProjectId = try c.decodeIfPresent(UUID.self, forKey: .scheduledProjectId) ?? defaults.scheduledProjectId
+    }
 }
 
 /// Observable, persisted settings. Owned by `AppModel` and injected into views.

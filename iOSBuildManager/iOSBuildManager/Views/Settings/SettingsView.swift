@@ -235,6 +235,13 @@ private struct GeneralSettingsTab: View {
                 Text("Show a macOS notification when a build succeeds or fails.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                Toggle("Show Menu Bar Icon", isOn: Binding(
+                    get: { settings.settings.showMenuBarIcon },
+                    set: { settings.settings.showMenuBarIcon = $0 }
+                ))
+                Text("Quick actions stay available from the menu bar; the app keeps running in the background when the window is closed.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }

@@ -46,7 +46,7 @@ GROUPS = [
                   "ProvisioningProfileService.swift", "CertificateService.swift",
                   "NotificationService.swift"], []),
     ("Theme", ["Theme.swift"], []),
-    ("Views", ["ContentView.swift", "Sidebar.swift"], VIEWS_SUB),
+    ("Views", ["ContentView.swift", "Sidebar.swift", "MenuBarMenu.swift"], VIEWS_SUB),
 ]
 
 TOP_FILES = ["iOSBuildManagerApp.swift"]
@@ -60,7 +60,7 @@ INFOPLIST = "iOSBuildManager/Info.plist"
 # Unit test target (hosted in the app so @testable import works).
 TEST_TARGET_NAME = "iOSBuildManagerTests"
 TEST_ROOT = "iOSBuildManagerTests"  # sibling folder of SRC_ROOT
-TEST_FILES = ["ParsingTests.swift", "PackagingTests.swift"]
+TEST_FILES = ["ParsingTests.swift", "PackagingTests.swift", "AppModelTests.swift"]
 TEST_BUNDLE_ID = "com.rontop.iOSBuildManagerTests"
 
 

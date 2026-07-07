@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import SwiftUI
 
@@ -16,6 +17,8 @@ final class AppModel: ObservableObject {
     let profiles: ProvisioningProfileStore
     let certificates: CertificateStore
 
+    private var cancellables: Set<AnyCancellable> = []
+
     init() {
         AppPaths.ensureDirectories()
         self.settings = SettingsStore()
@@ -25,6 +28,13 @@ final class AppModel: ObservableObject {
         self.engine = BuildEngine()
         self.profiles = ProvisioningProfileStore()
         self.certificates = CertificateStore()
+
+        // Scene-level modifiers (preferredColorScheme, MenuBarExtra insertion)
+        // read nested settings through `model`, so forward the store's change
+        // events or the scenes never re-evaluate when a setting flips.
+        settings.objectWillChange
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
     }
 
     // MARK: - Build
