@@ -56,16 +56,19 @@ fi
 # --- Background image for the DMG window ---
 echo "==> Rendering DMG background…"
 BACKGROUND="$ROOT/build/dmg-background.png"
-swift "$ROOT/scripts/render_dmg_background.swift" "$BACKGROUND" >/dev/null
+APP_ICON="$ROOT/iOSBuildManager/iOSBuildManager/Resources/Assets.xcassets/AppIcon.appiconset/icon_256.png"
+swift "$ROOT/scripts/render_dmg_background.swift" "$BACKGROUND" "$APP_ICON" >/dev/null
 
 # --- Build the DMG ---
 echo "==> Building DMG…"
 DMG_PATH="$DIST/$APP_NAME-$VERSION.dmg"
+VOLICON="$APP_PATH/Contents/Resources/AppIcon.icns"
 rm -f "$DMG_PATH"
 "$VENV/bin/dmgbuild" \
   -s "$ROOT/scripts/dmg_settings.py" \
   -D app="$APP_PATH" \
   -D background="$BACKGROUND" \
+  -D volicon="$VOLICON" \
   "$VOL_NAME" "$DMG_PATH" >/dev/null
 
 echo ""
