@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UserNotifications
 
@@ -55,8 +56,6 @@ struct iOSBuildManagerApp: App {
         }
 
         MenuBarExtra(
-            "iOS Build Manager",
-            systemImage: "shippingbox.fill",
             isInserted: Binding(
                 get: { model.settings.settings.showMenuBarIcon },
                 set: { model.settings.settings.showMenuBarIcon = $0 }
@@ -69,7 +68,22 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.history)
                 .environmentObject(model.devices)
                 .environmentObject(model.engine)
+        } label: {
+            Image(nsImage: Self.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
     }
+
+    /// A template NSImage sized like a native status item glyph — the SwiftUI
+    /// `systemImage` convenience renders too large and sits off the menu bar's
+    /// vertical center.
+    private static let menuBarIcon: NSImage = {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+        let image = NSImage(
+            systemSymbolName: "shippingbox.fill",
+            accessibilityDescription: "iOS Build Manager"
+        )?.withSymbolConfiguration(configuration) ?? NSImage()
+        image.isTemplate = true
+        return image
+    }()
 }
