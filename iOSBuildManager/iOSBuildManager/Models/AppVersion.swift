@@ -11,10 +11,10 @@ enum AppVersion {
 
     // MARK: - Credits
 
-    static let authorName = "Yam Ben Baruch"
-    static let authorGitHubHandle = "yam2441-crypto"
-    static let authorGitHubURL = URL(string: "https://github.com/yam2441-crypto")!
-    static let repositoryURL = URL(string: "https://github.com/yam2441-crypto/iOSBuildManager")!
+    static let authorName = "Yam.B"
+    static let authorGitHubHandle = "YamBN"
+    static let authorGitHubURL = URL(string: "https://github.com/YamBN")!
+    static let repositoryURL = URL(string: "https://github.com/YamBN/iOSBuildManager")!
 
     // MARK: - What's in this version
 

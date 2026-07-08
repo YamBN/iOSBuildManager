@@ -2,8 +2,8 @@ import Foundation
 
 /// Well-known filesystem locations used by the app.
 enum AppPaths {
-    static let bundleIdentifier = "com.yambenbaruch.iOSBuildManager"
-    static let schedulerIdentifier = "com.yambenbaruch.iOSBuildManager.scheduler"
+    static let bundleIdentifier = "com.yambn.iOSBuildManager"
+    static let schedulerIdentifier = "com.yambn.iOSBuildManager.scheduler"
 
     static var supportURL: URL {
         FileManager.default

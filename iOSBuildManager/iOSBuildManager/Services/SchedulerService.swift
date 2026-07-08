@@ -4,7 +4,10 @@ import Foundation
 enum SchedulerService {
     /// Identifiers used by older builds of this app; cleaned up on launch so a
     /// bundle-id rename doesn't leave orphaned agents running.
-    private static let legacyIdentifiers = ["com.rontop.iOSBuildManager.scheduler"]
+    private static let legacyIdentifiers = [
+        "com.rontop.iOSBuildManager.scheduler",
+        "com.yambenbaruch.iOSBuildManager.scheduler",
+    ]
 
     static var isEnabled: Bool {
         FileManager.default.fileExists(atPath: AppPaths.launchAgentURL.path)

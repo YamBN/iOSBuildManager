@@ -67,7 +67,7 @@ the app builds and packages exactly what Xcode signs.
 
 ## Install
 
-**Download a release** from the [Releases page](https://github.com/yam2441-crypto/iOSBuildManager/releases):
+**Download a release** from the [Releases page](https://github.com/YamBN/iOSBuildManager/releases):
 
 - **`iOSBuildManager-<version>.dmg`** — open it and drag **iOS Build Manager**
   into the **Applications** folder. The standard macOS install.
@@ -82,7 +82,7 @@ the app builds and packages exactly what Xcode signs.
 ### Build it yourself
 
 ```bash
-git clone https://github.com/yam2441-crypto/iOSBuildManager.git
+git clone https://github.com/YamBN/iOSBuildManager.git
 cd iOSBuildManager
 ./scripts/make-dmg.sh          # → dist/iOSBuildManager-<version>.dmg + .app.zip
 ```
@@ -114,7 +114,7 @@ warning that direct device installs won't work.
 ## Scheduled builds
 
 **Settings → Advanced → Scheduled Builds** installs a LaunchAgent at
-`~/Library/LaunchAgents/com.yambenbaruch.iOSBuildManager.scheduler.plist` that:
+`~/Library/LaunchAgents/com.yambn.iOSBuildManager.scheduler.plist` that:
 
 1. Rebuilds your project every N days (6 by default — inside the 7-day window)
 2. Repackages and refreshes `latest.ipa` in iCloud
