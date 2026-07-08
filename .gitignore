@@ -14,3 +14,7 @@ build/
 
 # Output
 *.ipa
+
+# Distribution artifacts
+build/
+dist/

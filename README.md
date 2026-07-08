@@ -65,12 +65,26 @@ the app builds and packages exactly what Xcode signs.
 
 - iCloud Drive enabled (optional — any output folder works)
 
-## Getting started
+## Install
+
+**Download a release** from the [Releases page](https://github.com/yam2441-crypto/iOSBuildManager/releases):
+
+- **`iOSBuildManager-<version>.dmg`** — open it and drag **iOS Build Manager**
+  into the **Applications** folder. The standard macOS install.
+- **`iOSBuildManager-<version>.app.zip`** — unzip and double-click the app to
+  run it directly, no install needed.
+
+> **First launch on another Mac:** the app is ad-hoc signed with a free Apple ID
+> (not notarized), so Gatekeeper will say it "can't be opened." Right-click the
+> app → **Open** → **Open** once, and macOS remembers it afterwards. (Or run
+> `xattr -dr com.apple.quarantine "/Applications/iOS Build Manager.app"`.)
+
+### Build it yourself
 
 ```bash
-git clone <this-repo>
-cd iOSBuildManager/iOSBuildManager
-xcodebuild -scheme iOSBuildManager -configuration Release build
+git clone https://github.com/yam2441-crypto/iOSBuildManager.git
+cd iOSBuildManager
+./scripts/make-dmg.sh          # → dist/iOSBuildManager-<version>.dmg + .app.zip
 ```
 
 Or open `iOSBuildManager/iOSBuildManager.xcodeproj` in Xcode and hit ⌘R.

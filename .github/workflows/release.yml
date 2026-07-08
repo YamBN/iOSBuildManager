@@ -13,19 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build (Release)
-        run: |
-          xcodebuild -project iOSBuildManager/iOSBuildManager.xcodeproj \
-            -scheme iOSBuildManager -configuration Release \
-            -derivedDataPath DerivedData build
-
-      - name: Zip app
-        run: |
-          cd DerivedData/Build/Products/Release
-          ditto -c -k --keepParent iOSBuildManager.app "iOSBuildManager-${GITHUB_REF_NAME}.zip"
+      - name: Build DMG + standalone app
+        run: ./scripts/make-dmg.sh
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: DerivedData/Build/Products/Release/iOSBuildManager-*.zip
+          files: |
+            dist/iOSBuildManager-*.dmg
+            dist/iOSBuildManager-*.app.zip
           generate_release_notes: true
