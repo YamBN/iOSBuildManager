@@ -1,9 +1,26 @@
 import Foundation
 
-/// Discovers connected physical iOS devices via `xcrun xctrace list devices`.
+/// A paired device that is currently unreachable (powered off, locked away,
+/// or not on the same network). Shown for context only — never offered as an
+/// install destination.
+struct OfflineDevice: Identifiable, Hashable, Sendable {
+    var id: String  // hardware UDID
+    var name: String
+    var model: String?
+}
+
+/// Discovers physical iOS devices via `xcrun devicectl list devices` (JSON).
+///
+/// devicectl is also the tool used for installs, so its view of the world is
+/// the accurate one: it never lists the Mac itself, and it distinguishes
+/// devices with an active connection (`tunnelState == connected`) from ones
+/// that are merely paired but unreachable right now.
 @MainActor
 final class DeviceStore: ObservableObject {
+    /// Devices that can receive a direct install right now.
     @Published private(set) var devices: [BuildDestination] = []
+    /// Paired devices that are currently unreachable.
+    @Published private(set) var offlineDevices: [OfflineDevice] = []
     @Published private(set) var isRefreshing: Bool = false
     @Published var lastError: String?
 
@@ -12,18 +29,18 @@ final class DeviceStore: ObservableObject {
         lastError = nil
         defer { isRefreshing = false }
 
-        let result: [BuildDestination]
         do {
-            result = try await Self.fetchConnectedDevices()
+            let result = try await Self.fetchDevices()
+            devices = result.connected
+            offlineDevices = result.offline
         } catch {
             lastError = error.localizedDescription
             devices = []
-            return
+            offlineDevices = []
         }
-        devices = result
     }
 
-    /// All selectable destinations: generic ones plus any connected devices.
+    /// All selectable destinations: generic ones plus reachable devices.
     var allDestinations: [BuildDestination] {
         BuildDestination.defaults + devices
     }
@@ -38,39 +55,52 @@ final class DeviceStore: ObservableObject {
         ) {}
     }
 
-    nonisolated static func fetchConnectedDevices() async throws -> [BuildDestination] {
-        let lines = try await ShellRunner.collect(
+    nonisolated static func fetchDevices() async throws -> (connected: [BuildDestination], offline: [OfflineDevice]) {
+        let output = FileManager.default.temporaryDirectory
+            .appendingPathComponent("devicectl-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: output) }
+
+        _ = try await ShellRunner.collect(
             command: "/usr/bin/xcrun",
-            arguments: ["xctrace", "list", "devices"]
+            arguments: ["devicectl", "list", "devices", "--json-output", output.path]
         )
-        return parseDevices(lines: lines)
+        guard let data = try? Data(contentsOf: output) else { return ([], []) }
+        return parse(devicectlJSON: data)
     }
 
-    nonisolated static func parseDevices(lines: [String]) -> [BuildDestination] {
-        var found: [BuildDestination] = []
-        // A UDID is 40 hex chars (pre-2018 devices), 8-16 hex (modern devices,
-        // e.g. 00008120-001E30E11E78201E), or 8-4-4-4-12 hex (UUID).
-        let udidPattern = "([0-9A-Fa-f]{40}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})"
-        let regex = try? NSRegularExpression(
-            pattern: "^(.*?)\\s+\\(\(udidPattern)\\)(\\s+\\[connected\\])?",
-            options: []
-        )
+    /// Parses `devicectl list devices --json-output` content. Devices with an
+    /// active tunnel become install destinations; paired-but-unreachable ones
+    /// are reported separately.
+    nonisolated static func parse(devicectlJSON data: Data) -> (connected: [BuildDestination], offline: [OfflineDevice]) {
+        guard let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let result = root["result"] as? [String: Any],
+              let entries = result["devices"] as? [[String: Any]]
+        else { return ([], []) }
 
-        for raw in lines {
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty || line.hasPrefix("==") || line.hasSuffix("Simulator") || line == "Mac" { continue }
-            guard let regex else { continue }
-            let range = NSRange(line.startIndex..., in: line)
-            if let match = regex.firstMatch(in: line, options: [], range: range),
-               let nameRange = Range(match.range(at: 1), in: line),
-               let idRange = Range(match.range(at: 2), in: line) {
-                let name = String(line[nameRange]).trimmingCharacters(in: .whitespaces)
-                let id = String(line[idRange])
-                // Skip simulators / Mac entries that occasionally include UDIDs.
-                if name.lowercased().contains("simulator") || name == "Mac" { continue }
-                found.append(.connectedDevice(id: id, name: name))
+        var connected: [BuildDestination] = []
+        var offline: [OfflineDevice] = []
+
+        for entry in entries {
+            let hardware = entry["hardwareProperties"] as? [String: Any]
+            let properties = entry["deviceProperties"] as? [String: Any]
+            let connection = entry["connectionProperties"] as? [String: Any]
+
+            guard let udid = hardware?["udid"] as? String else { continue }
+            let name = (properties?["name"] as? String)
+                ?? (hardware?["marketingName"] as? String)
+                ?? "Unknown Device"
+
+            let tunnelState = ((connection?["tunnelState"] as? String) ?? "").lowercased()
+            if tunnelState == "connected" {
+                connected.append(.connectedDevice(id: udid, name: name))
+            } else {
+                offline.append(OfflineDevice(
+                    id: udid,
+                    name: name,
+                    model: hardware?["marketingName"] as? String
+                ))
             }
         }
-        return found
+        return (connected, offline)
     }
 }

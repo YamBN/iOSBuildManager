@@ -9,6 +9,9 @@ struct DevicesView: View {
                 header
                 summaryCard
                 devicesCard
+                if !devices.offlineDevices.isEmpty {
+                    offlineCard
+                }
                 helpCard
             }
             .padding(20)
@@ -29,9 +32,9 @@ struct DevicesView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Connected Devices")
+            Text("Devices")
                 .font(.largeTitle.weight(.bold))
-            Text("Detected via `xcrun xctrace list devices`.")
+            Text("Detected via `xcrun devicectl list devices`. Only devices with an active connection can receive direct installs.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -40,9 +43,9 @@ struct DevicesView: View {
     private var summaryCard: some View {
         GlassPanel {
             HStack {
-                stat("Detected", "\(devices.devices.count)", "iphone.radiowaves.left.and.right")
+                stat("Connected", "\(devices.devices.count)", "iphone.radiowaves.left.and.right")
                 Divider().frame(height: 36)
-                stat("Generic Destinations", "\(BuildDestination.defaults.count)", "rectangle.dashed")
+                stat("Paired, Offline", "\(devices.offlineDevices.count)", "iphone.slash")
                 if let err = devices.lastError {
                     Divider().frame(height: 36)
                     stat("Last Error", err, "exclamationmark.triangle")
@@ -64,11 +67,11 @@ struct DevicesView: View {
     private var devicesCard: some View {
         GlassPanel {
             VStack(alignment: .leading, spacing: 12) {
-                SectionHeader(title: "Connected iOS Devices", systemImage: "iphone")
+                SectionHeader(title: "Connected Devices", systemImage: "iphone")
                 if devices.isRefreshing {
                     HStack { ProgressView(); Text("Scanning…") }
                 } else if devices.devices.isEmpty {
-                    Text("No connected devices found. Plug in an iPhone and tap Refresh.")
+                    Text("No reachable devices. Plug in an iPhone — or make sure it's awake and on the same network — then tap Refresh.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
@@ -96,14 +99,46 @@ struct DevicesView: View {
         }
     }
 
+    private var offlineCard: some View {
+        GlassPanel {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "Paired, Currently Offline", systemImage: "iphone.slash")
+                Text("Paired with this Mac but unreachable right now (powered off or on a different network) — they can't receive direct installs.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                VStack(spacing: 0) {
+                    ForEach(devices.offlineDevices) { device in
+                        HStack {
+                            Image(systemName: "iphone.slash")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 22)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(device.name).font(.callout.weight(.medium)).foregroundStyle(.secondary)
+                                Text(device.model ?? device.id).font(.caption2).foregroundStyle(.tertiary)
+                            }
+                            Spacer()
+                            Text("Offline")
+                                .font(.caption2)
+                                .padding(.horizontal, 8).padding(.vertical, 3)
+                                .background(.secondary.opacity(0.15), in: Capsule())
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        if device.id != devices.offlineDevices.last?.id { Divider() }
+                    }
+                }
+            }
+        }
+    }
+
     private var helpCard: some View {
         GlassPanel {
             VStack(alignment: .leading, spacing: 8) {
                 SectionHeader(title: "Tips", systemImage: "lightbulb")
                 Text("• Trust the computer on the iPhone after plugging in.")
+                Text("• Wi-Fi installs need the device awake and on the same network.")
                 Text("• Install the free Apple ID via Xcode → Settings → Accounts.")
                 Text("• For SideStore/AltStore, the IPA is dropped into iCloud Builds.")
-                Text("• Simulator destinations produce iphonesimulator builds (not installable on device).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             }

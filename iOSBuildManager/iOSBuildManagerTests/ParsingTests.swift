@@ -43,39 +43,45 @@ final class SchemeParsingTests: XCTestCase {
 }
 
 final class DeviceParsingTests: XCTestCase {
-    func testParsesModernAndLegacyUDIDsAndSkipsSimulators() {
-        let lines = """
-        == Devices ==
-        Yam iPhone (18.5) (00008120-001E30E11E78201E)
-        Old iPad (12.4) (a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0)
-
-        == Devices Offline ==
-
-        == Simulators ==
-        iPhone 16 Simulator (18.5) (93A43638-0412-52DA-B201-AA8990C2313E)
-        """.components(separatedBy: "\n")
-
-        let found = DeviceStore.parseDevices(lines: lines)
-        let ids = found.compactMap { destination -> String? in
-            if case .connectedDevice(let id, _) = destination { return id }
-            return nil
-        }
-
-        // Modern 8-16 hex UDID (post-2018 devices).
-        XCTAssertTrue(ids.contains("00008120-001E30E11E78201E"))
-        // Legacy 40-hex UDID.
-        XCTAssertTrue(ids.contains("a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0"))
-        // Simulators must never be offered as install destinations.
-        XCTAssertFalse(ids.contains("93A43638-0412-52DA-B201-AA8990C2313E"))
+    /// Shapes match real `devicectl list devices --json-output` content.
+    private func fixture(_ devices: [[String: Any]]) -> Data {
+        let root: [String: Any] = ["info": [:], "result": ["devices": devices]]
+        return try! JSONSerialization.data(withJSONObject: root)
     }
 
-    func testExtractsDeviceNameWithoutUDID() {
-        let lines = ["My iPhone (00008120-001E30E11E78201E)"]
-        let found = DeviceStore.parseDevices(lines: lines)
-        guard case .connectedDevice(_, let name)? = found.first else {
+    func testOnlyTunnelConnectedDevicesAreInstallTargets() {
+        let json = fixture([
+            [
+                "identifier": "93A43638-0412-52DA-B201-AA8990C2313E",
+                "deviceProperties": ["name": "Yam iPhone"],
+                "hardwareProperties": ["udid": "00008120-001E30E11E78201E", "platform": "iOS", "marketingName": "iPhone 14 Pro"],
+                "connectionProperties": ["pairingState": "paired", "tunnelState": "connected"],
+            ],
+            [
+                "identifier": "380FDA4C-1424-5DB3-817B-3FFBEADD64F5",
+                "deviceProperties": ["name": "Powered-off iPad"],
+                "hardwareProperties": ["udid": "00008112-001438A811FA601E", "platform": "iOS", "marketingName": "iPad Air"],
+                "connectionProperties": ["pairingState": "paired", "tunnelState": "unavailable"],
+            ],
+        ])
+
+        let (connected, offline) = DeviceStore.parse(devicectlJSON: json)
+
+        XCTAssertEqual(connected.count, 1)
+        guard case .connectedDevice(let id, let name)? = connected.first else {
             return XCTFail("expected a connected device")
         }
-        XCTAssertEqual(name, "My iPhone")
+        XCTAssertEqual(id, "00008120-001E30E11E78201E")
+        XCTAssertEqual(name, "Yam iPhone")
+
+        // The unreachable device is reported separately, never as a target.
+        XCTAssertEqual(offline.map(\.id), ["00008112-001438A811FA601E"])
+    }
+
+    func testMalformedJSONYieldsNoDevices() {
+        let (connected, offline) = DeviceStore.parse(devicectlJSON: Data("not json".utf8))
+        XCTAssertTrue(connected.isEmpty)
+        XCTAssertTrue(offline.isEmpty)
     }
 }
 

@@ -114,9 +114,11 @@ enum ScriptGenerator {
                 "\(helper)" "$APP" "$NAME" "$VER" "$NUM"
             fi
 
-            # Close the loop: if a device is connected, re-install so the app on the
-            # phone keeps working past the previous signing's expiry.
-            DEVICE_ID="$(/usr/bin/xcrun devicectl list devices 2>/dev/null | /usr/bin/grep -Eo '([0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{40})' | head -n 1)"
+            # Close the loop: if a device is reachable, re-install so the app on the
+            # phone keeps working past the previous signing's expiry. Only rows whose
+            # State column is "connected" count — the left word boundary keeps
+            # "disconnected" and "unavailable" rows from matching.
+            DEVICE_ID="$(/usr/bin/xcrun devicectl list devices 2>/dev/null | /usr/bin/grep -E '(^|[[:space:]])connected' | /usr/bin/grep -Eo '([0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{40})' | head -n 1)"
             if [ -n "$DEVICE_ID" ]; then
                 if /usr/bin/xcrun devicectl device install app --device "$DEVICE_ID" "$APP" >/dev/null 2>&1; then
                     notify "✅ $NAME $VER ($NUM) installed" "Rebuilt and re-installed on your device."
