@@ -102,6 +102,36 @@ final class AppModel: ObservableObject {
         if selectedProjectId == project.id { selectedProjectId = nil }
     }
 
+    /// Deletes the app-managed DerivedData for a project ("Clean Build Folder").
+    func cleanBuildFolder(for project: Project) {
+        try? FileManager.default.removeItem(at: AppPaths.derivedData(for: project))
+    }
+
+    /// Clean build folder, then build from scratch.
+    func rebuild(projectId: UUID) {
+        guard let project = projects.project(with: projectId) else { return }
+        cleanBuildFolder(for: project)
+        startBuild(for: project.id)
+    }
+
+    /// Installs the latest successful build onto the first connected device,
+    /// reporting the outcome via a notification (used from the menu bar panel,
+    /// where there's no room for a device-picker UI).
+    func installLatestOnFirstDevice() {
+        Task {
+            await devices.refresh()
+            guard case .connectedDevice(let id, let name)? = devices.devices.first else {
+                NotificationService.post(
+                    title: "No device connected",
+                    body: "Connect your iPhone via USB or Wi-Fi and trust this Mac."
+                )
+                return
+            }
+            let message = await installLatestBuildOnDevice(deviceId: id)
+            NotificationService.post(title: name, body: message)
+        }
+    }
+
     // MARK: - Devices
 
     /// Installs the most recent successful build's `.app` onto a connected device.

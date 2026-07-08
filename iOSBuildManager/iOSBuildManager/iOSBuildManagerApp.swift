@@ -70,5 +70,6 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.devices)
                 .environmentObject(model.engine)
         }
+        .menuBarExtraStyle(.window)
     }
 }
