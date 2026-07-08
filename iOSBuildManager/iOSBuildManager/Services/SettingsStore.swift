@@ -70,12 +70,24 @@ struct AppSettings: Codable, Sendable, Hashable {
 /// Observable, persisted settings. Owned by `AppModel` and injected into views.
 @MainActor
 final class SettingsStore: ObservableObject {
-    @Published var settings: AppSettings {
-        didSet { save() }
+    private var storage: AppSettings
+
+    /// No-op writes must neither publish nor save: SwiftUI's MenuBarExtra
+    /// rewrites its `isInserted` binding during every scene update, and
+    /// publishing on an equal value re-triggers the scene update — an
+    /// infinite loop that pegs the CPU and hammers the disk.
+    var settings: AppSettings {
+        get { storage }
+        set {
+            guard newValue != storage else { return }
+            objectWillChange.send()
+            storage = newValue
+            save()
+        }
     }
 
     init() {
-        self.settings = Self.load()
+        self.storage = Self.load()
     }
 
     static func load() -> AppSettings {
