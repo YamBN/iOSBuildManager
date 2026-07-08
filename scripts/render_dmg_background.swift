@@ -148,6 +148,26 @@ arrowBlue.setStroke()
 arrow.stroke()
 ctx.restoreGState()
 
+// ---- Readability chips behind the icon labels ----
+// Finder draws item labels on top of this background using the system
+// appearance's color (dark text in Light Mode → low contrast on this dark
+// background). We can't recolor Finder's labels, so we lay a soft rounded chip
+// behind each so they read clearly in both Light and Dark Mode.
+func labelChip(centerX: CGFloat, centerTopY: CGFloat, text: String) {
+    let f = NSFont.systemFont(ofSize: 13)
+    let w = textWidth(text, font: f) + 24
+    let h: CGFloat = 23
+    let rect = CGRect(x: centerX - w / 2, y: fy(centerTopY) - h / 2, width: w, height: h)
+    let chip = NSBezierPath(roundedRect: rect, xRadius: 7, yRadius: 7)
+    NSColor.white.withAlphaComponent(0.18).setFill()
+    chip.fill()
+    NSColor.white.withAlphaComponent(0.16).setStroke()
+    chip.lineWidth = 1
+    chip.stroke()
+}
+labelChip(centerX: appIconCenter.x, centerTopY: 333, text: "iOSBuildManager")
+labelChip(centerX: appsIconCenter.x, centerTopY: 333, text: "Applications")
+
 // ---- Install instruction ----
 draw("Drag iOS Build Manager to Applications to install",
      font: NSFont.systemFont(ofSize: 15, weight: .medium),
