@@ -35,6 +35,14 @@ final class AppModel: ObservableObject {
         settings.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
+
+        // Migrate LaunchAgents installed under old bundle identifiers; if one
+        // existed and scheduling is still on, re-install it under the current
+        // identifier so scheduled builds keep working after the rename.
+        Task { [weak self] in
+            let hadLegacy = await SchedulerService.removeLegacyAgents()
+            if hadLegacy { await self?.applySchedulerSettings() }
+        }
     }
 
     // MARK: - Build

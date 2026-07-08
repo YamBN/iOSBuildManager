@@ -100,7 +100,7 @@ warning that direct device installs won't work.
 ## Scheduled builds
 
 **Settings → Advanced → Scheduled Builds** installs a LaunchAgent at
-`~/Library/LaunchAgents/com.rontop.iOSBuildManager.scheduler.plist` that:
+`~/Library/LaunchAgents/com.yambenbaruch.iOSBuildManager.scheduler.plist` that:
 
 1. Rebuilds your project every N days (6 by default — inside the 7-day window)
 2. Repackages and refreshes `latest.ipa` in iCloud

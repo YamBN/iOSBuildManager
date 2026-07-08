@@ -2,8 +2,33 @@ import Foundation
 
 /// Manages a LaunchAgent for optional scheduled builds (default: every 6 days).
 enum SchedulerService {
+    /// Identifiers used by older builds of this app; cleaned up on launch so a
+    /// bundle-id rename doesn't leave orphaned agents running.
+    private static let legacyIdentifiers = ["com.rontop.iOSBuildManager.scheduler"]
+
     static var isEnabled: Bool {
         FileManager.default.fileExists(atPath: AppPaths.launchAgentURL.path)
+    }
+
+    /// Unloads and deletes LaunchAgents installed under old identifiers.
+    /// Returns true when one was found, so the caller can re-install under
+    /// the current identifier.
+    @discardableResult
+    static func removeLegacyAgents() async -> Bool {
+        let fm = FileManager.default
+        var foundAny = false
+        for identifier in legacyIdentifiers {
+            let url = fm.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/LaunchAgents/\(identifier).plist")
+            guard fm.fileExists(atPath: url.path) else { continue }
+            foundAny = true
+            _ = try? await ShellRunner.collect(
+                command: "/bin/launchctl",
+                arguments: ["unload", "-w", url.path]
+            )
+            try? fm.removeItem(at: url)
+        }
+        return foundAny
     }
 
     /// Installs the helper script, generates the scheduled build script, writes

@@ -53,7 +53,7 @@ TOP_FILES = ["iOSBuildManagerApp.swift"]
 RES_FILES = ["Assets.xcassets"]  # lives in Resources/
 
 PRODUCT_NAME = "iOSBuildManager"
-BUNDLE_ID = "com.rontop.iOSBuildManager"
+BUNDLE_ID = "com.yambenbaruch.iOSBuildManager"
 ENTITLEMENTS = "iOSBuildManager/iOSBuildManager.entitlements"
 INFOPLIST = "iOSBuildManager/Info.plist"
 
@@ -61,7 +61,7 @@ INFOPLIST = "iOSBuildManager/Info.plist"
 TEST_TARGET_NAME = "iOSBuildManagerTests"
 TEST_ROOT = "iOSBuildManagerTests"  # sibling folder of SRC_ROOT
 TEST_FILES = ["ParsingTests.swift", "PackagingTests.swift", "AppModelTests.swift"]
-TEST_BUNDLE_ID = "com.rontop.iOSBuildManagerTests"
+TEST_BUNDLE_ID = "com.yambenbaruch.iOSBuildManagerTests"
 
 
 def collect(node, prefix, files_out, groups_out, is_views_root=False):

@@ -717,8 +717,43 @@ private struct AdvancedSettingsTab: View {
 
                 Divider()
 
-                Text("What's New").font(.subheadline.weight(.semibold))
-                ForEach(Array(AppVersion.changelog.prefix(3))) { entry in
+                HStack(spacing: 8) {
+                    Image(systemName: "person.crop.circle")
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 20)
+                    Text("Created by **\(AppVersion.authorName)**")
+                        .font(.callout)
+                    Link("@\(AppVersion.authorGitHubHandle)", destination: AppVersion.authorGitHubURL)
+                        .font(.callout)
+                    Spacer()
+                    Link(destination: AppVersion.repositoryURL) {
+                        Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                            .font(.caption)
+                    }
+                }
+
+                Divider()
+
+                Text("What's Included").font(.subheadline.weight(.semibold))
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(AppVersion.highlights, id: \.self) { highlight in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.green)
+                                .frame(width: 16)
+                                .padding(.top, 2)
+                            Text(highlight)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Divider()
+
+                Text("Release History").font(.subheadline.weight(.semibold))
+                ForEach(AppVersion.changelog) { entry in
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: entry.type.systemImage)
                             .foregroundStyle(Color.accentColor)

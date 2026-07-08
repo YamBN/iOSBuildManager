@@ -594,7 +594,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Local-only developer tool. No analytics, no tracking.";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rontop.iOSBuildManager;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yambenbaruch.iOSBuildManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -624,7 +624,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Local-only developer tool. No analytics, no tracking.";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rontop.iOSBuildManager;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yambenbaruch.iOSBuildManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -645,7 +645,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rontop.iOSBuildManagerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yambenbaruch.iOSBuildManagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
@@ -665,7 +665,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rontop.iOSBuildManagerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yambenbaruch.iOSBuildManagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
