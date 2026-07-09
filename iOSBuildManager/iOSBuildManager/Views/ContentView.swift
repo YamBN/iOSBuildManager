@@ -8,12 +8,17 @@ struct ContentView: View {
         NavigationSplitView {
             Sidebar(selection: $model.selection)
                 .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 280)
+                .background(AppBackground())
         } detail: {
             detailView
                 .navigationSplitViewColumnWidth(min: 640, ideal: 900)
                 .background(AppBackground())
         }
         .background(AppBackground())
+        .task { await model.checkForUpdates() }
+        .sheet(item: $model.availableUpdate) { update in
+            UpdateAvailableSheet(update: update)
+        }
     }
 
     @ViewBuilder

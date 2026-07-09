@@ -132,6 +132,41 @@ final class SchedulerKeyTests: XCTestCase {
     }
 }
 
+final class UpdateCheckTests: XCTestCase {
+    func testNormalizeStripsLeadingV() {
+        XCTAssertEqual(UpdateCheckService.normalize("v1.2.0"), "1.2.0")
+        XCTAssertEqual(UpdateCheckService.normalize("1.2.0"), "1.2.0")
+    }
+
+    func testNewerPatchVersionDetected() {
+        XCTAssertTrue(UpdateCheckService.isNewer("1.1.1", than: "1.1.0"))
+    }
+
+    func testNewerMinorVersionDetected() {
+        XCTAssertTrue(UpdateCheckService.isNewer("1.2.0", than: "1.1.9"))
+    }
+
+    func testSameVersionIsNotNewer() {
+        XCTAssertFalse(UpdateCheckService.isNewer("1.1.0", than: "1.1.0"))
+    }
+
+    func testOlderVersionIsNotNewer() {
+        XCTAssertFalse(UpdateCheckService.isNewer("1.0.0", than: "1.1.0"))
+    }
+
+    /// Numeric comparison, not lexical — "1.10.0" must beat "1.9.0" even
+    /// though "1.10.0" < "1.9.0" as a string.
+    func testDoubleDigitComponentComparesNumerically() {
+        XCTAssertTrue(UpdateCheckService.isNewer("1.10.0", than: "1.9.0"))
+        XCTAssertFalse(UpdateCheckService.isNewer("1.9.0", than: "1.10.0"))
+    }
+
+    func testMissingComponentsTreatedAsZero() {
+        XCTAssertTrue(UpdateCheckService.isNewer("1.1", than: "1.0.9"))
+        XCTAssertFalse(UpdateCheckService.isNewer("1.0", than: "1.0.0"))
+    }
+}
+
 final class SigningIdentityTests: XCTestCase {
     func testTeamIdIsParsedFromCommonName() {
         let identity = SigningIdentity(

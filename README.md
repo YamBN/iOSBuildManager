@@ -75,9 +75,28 @@ the app builds and packages exactly what Xcode signs.
   run it directly, no install needed.
 
 > **First launch on another Mac:** the app is ad-hoc signed with a free Apple ID
-> (not notarized), so Gatekeeper will say it "can't be opened." Right-click the
-> app → **Open** → **Open** once, and macOS remembers it afterwards. (Or run
-> `xattr -dr com.apple.quarantine "/Applications/iOS Build Manager.app"`.)
+> — not notarized by Apple, which requires a paid $99/year Developer Program
+> membership — so Gatekeeper blocks it the first time. This is normal for any
+> app distributed outside the App Store without notarization. One-time fix,
+> pick whichever is easiest:
+>
+> **Terminal (fastest, works on every macOS version):**
+> ```bash
+> xattr -cr /Applications/iOSBuildManager.app
+> ```
+>
+> **macOS Sequoia (15) and newer** — right-click → Open no longer offers a
+> bypass, so instead:
+> 1. Try to open the app normally (you'll get a "can't be opened" alert).
+> 2. **System Settings → Privacy & Security** → scroll down to the security
+>    section — you'll see *"iOSBuildManager was blocked to protect your Mac"*
+>    with an **Open Anyway** button. Click it, then confirm with your password.
+>
+> **macOS Sonoma (14) and older:**
+> Right-click (or Control-click) the app → **Open** → **Open** in the dialog
+> that appears.
+>
+> Any of these only has to be done once — macOS remembers your choice after that.
 
 ### Build it yourself
 

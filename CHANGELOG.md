@@ -5,6 +5,21 @@ The source of truth for the app version is `iOSBuildManager/iOSBuildManager/Mode
 (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) are kept in sync. The in-app
 About / Settings screens show the latest 3 entries below.
 
+## 1.2.0 — 2026-07-09
+
+- Checks GitHub Releases on launch and shows an **Update Available** sheet
+  with release notes when a newer version exists — one unauthenticated,
+  telemetry-free request to `api.github.com`. Toggle in Settings → Advanced
+  → About, plus a **Check for Updates Now** button; "Skip This Version" is
+  remembered.
+- Fixed: the **sidebar rendered flat gray** instead of the same navy glass
+  gradient as the rest of the app — `detailView` had its own `AppBackground`
+  but the sidebar was only inheriting the outer one, which macOS's automatic
+  sidebar vibrancy material was blocking. Gave the sidebar its own background.
+- README: clearer, version-specific steps for opening the ad-hoc-signed app
+  past Gatekeeper (the one-liner `xattr -cr`, and the macOS Sequoia+ System
+  Settings path since right-click → Open no longer offers a bypass there).
+
 ## 1.1.0 — 2026-07-08
 
 - Flexible scheduled builds: **Every N days**, **Daily** at a set time, or

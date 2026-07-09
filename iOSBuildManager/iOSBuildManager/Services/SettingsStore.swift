@@ -76,6 +76,8 @@ struct AppSettings: Codable, Sendable, Hashable {
     var scheduleHour: Int = 3            // 0–23, used by daily/weekly
     var scheduleMinute: Int = 0          // 0–59
     var scheduleWeekdays: [Int] = [1, 4] // Mon, Thu (launchd 0=Sun…6=Sat)
+    var checkForUpdatesAutomatically: Bool = true
+    var skippedUpdateVersion: String? = nil // user tapped "Skip This Version"
 
     init() {}
 
@@ -100,6 +102,8 @@ struct AppSettings: Codable, Sendable, Hashable {
         scheduleHour = try c.decodeIfPresent(Int.self, forKey: .scheduleHour) ?? defaults.scheduleHour
         scheduleMinute = try c.decodeIfPresent(Int.self, forKey: .scheduleMinute) ?? defaults.scheduleMinute
         scheduleWeekdays = try c.decodeIfPresent([Int].self, forKey: .scheduleWeekdays) ?? defaults.scheduleWeekdays
+        checkForUpdatesAutomatically = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdatesAutomatically) ?? defaults.checkForUpdatesAutomatically
+        skippedUpdateVersion = try c.decodeIfPresent(String.self, forKey: .skippedUpdateVersion) ?? defaults.skippedUpdateVersion
     }
 }
 

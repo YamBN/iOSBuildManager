@@ -8,6 +8,7 @@ import SwiftUI
 final class AppModel: ObservableObject {
     @Published var selection: SidebarSection = .dashboard
     @Published var selectedProjectId: UUID?
+    @Published var availableUpdate: AvailableUpdate?
 
     let settings: SettingsStore
     let projects: ProjectStore
@@ -89,6 +90,27 @@ final class AppModel: ObservableObject {
     func refreshSigning() async {
         await profiles.refresh()
         await certificates.refresh()
+    }
+
+    // MARK: - Update check
+
+    /// Checks GitHub Releases for a newer version and populates
+    /// `availableUpdate` if there is one. `force: true` (an explicit "Check
+    /// Now" click) bypasses both the auto-check setting and a previously
+    /// skipped version; the silent launch-time check respects both.
+    @discardableResult
+    func checkForUpdates(force: Bool = false) async -> AvailableUpdate? {
+        guard force || settings.settings.checkForUpdatesAutomatically else { return nil }
+        guard let update = await UpdateCheckService.checkForUpdate(currentVersion: AppVersion.version) else { return nil }
+        guard force || update.version != settings.settings.skippedUpdateVersion else { return nil }
+        availableUpdate = update
+        return update
+    }
+
+    /// Remembers the given version so it's never shown again (until a newer one ships).
+    func skipUpdate(_ version: String) {
+        settings.settings.skippedUpdateVersion = version
+        availableUpdate = nil
     }
 
     // MARK: - Projects

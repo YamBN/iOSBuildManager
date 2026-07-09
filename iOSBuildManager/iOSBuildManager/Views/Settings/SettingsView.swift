@@ -531,6 +531,8 @@ private struct AdvancedSettingsTab: View {
     @State private var helperInstalled = false
     @State private var schedulerMessage: String?
     @State private var isApplying = false
+    @State private var isCheckingForUpdates = false
+    @State private var checkedUpToDate = false
 
     private var runScript: String { ScriptGenerator.runScriptPhase() }
 
@@ -799,6 +801,35 @@ private struct AdvancedSettingsTab: View {
                         .font(.caption2)
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(Color.accentColor.opacity(0.15), in: Capsule())
+                }
+
+                Toggle("Check for Updates Automatically", isOn: Binding(
+                    get: { settings.settings.checkForUpdatesAutomatically },
+                    set: { settings.settings.checkForUpdatesAutomatically = $0 }
+                ))
+
+                HStack {
+                    if isCheckingForUpdates {
+                        ProgressView().controlSize(.small)
+                        Text("Checking…").font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Button("Check for Updates Now") {
+                            Task {
+                                isCheckingForUpdates = true
+                                checkedUpToDate = false
+                                let found = await model.checkForUpdates(force: true)
+                                isCheckingForUpdates = false
+                                if found == nil { checkedUpToDate = true }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        if checkedUpToDate {
+                            Label("You're up to date", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.caption)
+                        }
+                    }
                 }
 
                 Divider()
