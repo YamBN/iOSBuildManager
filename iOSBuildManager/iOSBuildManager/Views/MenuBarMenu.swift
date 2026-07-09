@@ -66,12 +66,7 @@ struct MenuBarMenu: View {
             .keyboardShortcut("o", modifiers: .command)
             .disabled(latest == nil)
 
-            PanelRow(icon: "iphone", title: "Install on Device", shortcut: "⌘I") {
-                model.installLatestOnFirstDevice()
-                closePanel()
-            }
-            .keyboardShortcut("i", modifiers: .command)
-            .disabled(latest == nil)
+            installOnDeviceRow
 
             PanelRow(icon: "folder", title: "Open Builds Folder", shortcut: "⇧⌘O") {
                 FinderActions.openFolder(settings.settings.outputURL)
@@ -80,6 +75,11 @@ struct MenuBarMenu: View {
             .keyboardShortcut("o", modifiers: [.command, .shift])
 
             divider
+
+            if engine.isBuilding {
+                buildingNowRow
+                divider
+            }
 
             sectionLabel("Recent Builds")
 
@@ -113,6 +113,97 @@ struct MenuBarMenu: View {
         .padding(10)
         .frame(width: 340)
         .preferredColorScheme(settings.settings.theme.colorScheme)
+        .task { await devices.refresh() }
+    }
+
+    // MARK: - Building now
+
+    private var buildingNowRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionLabel("Building Now")
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(engine.currentProjectName ?? "Building…")
+                        .font(.callout.weight(.medium))
+                        .lineLimit(1)
+                    if let progress = engine.estimatedProgress {
+                        ProgressView(value: progress, total: 1)
+                        Text("\(Int(progress * 100))% • \(BuildProgressEstimator.formattedElapsed(engine.elapsedSeconds))")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("\(BuildProgressEstimator.formattedElapsed(engine.elapsedSeconds)) elapsed")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+                Button {
+                    engine.cancel()
+                } label: {
+                    Image(systemName: "stop.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Cancel Build")
+            }
+            .padding(.horizontal, 10)
+        }
+    }
+
+    // MARK: - Install on device
+
+    /// A `Menu` (not a plain row) — the destination is ambiguous when more
+    /// than one device is connected, so this always shows the device list
+    /// rather than silently guessing which one to install to.
+    private var installOnDeviceRow: some View {
+        Menu {
+            if devices.devices.isEmpty {
+                Text("No Devices Connected")
+            } else {
+                ForEach(devices.devices) { destination in
+                    if case .connectedDevice(let id, let name) = destination {
+                        Button(name) {
+                            installOnDevice(id: id, name: name)
+                        }
+                    }
+                }
+            }
+            Divider()
+            Button("Refresh Devices") {
+                Task { await devices.refresh() }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "iphone")
+                    .frame(width: 20)
+                Text("Install on Device")
+                Spacer(minLength: 12)
+                if devices.isRefreshing {
+                    ProgressView().controlSize(.small)
+                } else if !devices.devices.isEmpty {
+                    Text("\(devices.devices.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .font(.callout)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .disabled(latest == nil)
+    }
+
+    private func installOnDevice(id: String, name: String) {
+        Task {
+            let message = await model.installLatestBuildOnDevice(deviceId: id)
+            NotificationService.post(title: name, body: message)
+        }
+        closePanel()
     }
 
     // MARK: - Project row

@@ -7,6 +7,9 @@ struct LogsView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if engine.isBuilding {
+                progressRow
+            }
             Divider()
             logScroll
             Divider()
@@ -33,6 +36,27 @@ struct LogsView: View {
             StatusBadge(status: engine.status)
         }
         .padding(16)
+    }
+
+    private var progressRow: some View {
+        HStack(spacing: 12) {
+            if let progress = engine.estimatedProgress {
+                ProgressView(value: progress, total: 1)
+                Text("\(Int(progress * 100))%")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 40, alignment: .trailing)
+            } else {
+                ProgressView()
+                    .controlSize(.small)
+            }
+            Text(BuildProgressEstimator.formattedElapsed(engine.elapsedSeconds))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
     }
 
     private var logScroll: some View {

@@ -197,3 +197,36 @@ final class SigningIdentityTests: XCTestCase {
         XCTAssertEqual(healthy.statusLabel, "Valid")
     }
 }
+
+final class BuildProgressEstimatorTests: XCTestCase {
+    func testExpectedDurationIsNilWithNoHistory() {
+        XCTAssertNil(BuildProgressEstimator.expectedDuration(from: []))
+    }
+
+    func testExpectedDurationIsMeanOfDurations() {
+        XCTAssertEqual(BuildProgressEstimator.expectedDuration(from: [10, 20, 30]), 20)
+    }
+
+    func testProgressIsNilWithoutExpectedDuration() {
+        XCTAssertNil(BuildProgressEstimator.progress(elapsed: 10, expected: nil))
+        XCTAssertNil(BuildProgressEstimator.progress(elapsed: 10, expected: 0))
+    }
+
+    func testProgressScalesWithElapsedTime() {
+        XCTAssertEqual(BuildProgressEstimator.progress(elapsed: 30, expected: 60), 0.5)
+    }
+
+    func testProgressIsCappedShortOfComplete() {
+        XCTAssertEqual(BuildProgressEstimator.progress(elapsed: 1000, expected: 60), 0.95)
+    }
+
+    func testProgressNeverGoesNegative() {
+        XCTAssertEqual(BuildProgressEstimator.progress(elapsed: -5, expected: 60), 0)
+    }
+
+    func testFormattedElapsedPadsSeconds() {
+        XCTAssertEqual(BuildProgressEstimator.formattedElapsed(65), "1:05")
+        XCTAssertEqual(BuildProgressEstimator.formattedElapsed(5), "0:05")
+        XCTAssertEqual(BuildProgressEstimator.formattedElapsed(-3), "0:00")
+    }
+}

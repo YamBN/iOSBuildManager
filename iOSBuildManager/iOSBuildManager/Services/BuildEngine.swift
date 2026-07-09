@@ -1,6 +1,32 @@
 import Foundation
 import SwiftUI
 
+/// Pure, testable logic for turning "how long has this build been running"
+/// into a progress estimate — `xcodebuild` doesn't expose a real percentage,
+/// so this approximates one from the project's own build history.
+enum BuildProgressEstimator {
+    /// Mean of the last few successful build durations, or nil with no history.
+    static func expectedDuration(from recentDurations: [Double]) -> Double? {
+        guard !recentDurations.isEmpty else { return nil }
+        return recentDurations.reduce(0, +) / Double(recentDurations.count)
+    }
+
+    /// Progress in 0...1, capped short of 100% since a build isn't done until
+    /// it's actually done — the last stretch just sits at the cap instead of
+    /// lying about completion. Nil expected duration means "unknown" (caller
+    /// should show an indeterminate spinner instead of a percentage).
+    static func progress(elapsed: TimeInterval, expected: Double?) -> Double? {
+        guard let expected, expected > 0 else { return nil }
+        return min(0.95, max(0, elapsed / expected))
+    }
+
+    /// "1:05" style elapsed-time label for the UI.
+    static func formattedElapsed(_ seconds: TimeInterval) -> String {
+        let total = max(0, Int(seconds))
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+}
+
 /// Drives a single build: runs `xcodebuild`, streams logs into `@Published`
 /// state, then packages the resulting `.app` into an IPA and records history.
 @MainActor
@@ -10,12 +36,18 @@ final class BuildEngine: ObservableObject {
     @Published private(set) var currentProjectName: String?
     @Published private(set) var lastError: String?
     @Published private(set) var buildStartedAt: Date?
+    @Published private(set) var elapsedSeconds: TimeInterval = 0
+    /// 0...1 estimate, or nil when there's no build history to estimate from
+    /// (shows an indeterminate spinner instead of a percentage).
+    @Published private(set) var estimatedProgress: Double?
 
     private var process: Process?
     private var consumerTask: Task<Void, Never>?
+    private var progressTicker: Task<Void, Never>?
     private var channel: EagerLineChannel?
     private var exitBox: ExitCodeBox?
     private var isCancelling = false
+    private var expectedDuration: Double?
 
     private weak var history: BuildHistoryStore?
     private weak var projectStore: ProjectStore?
@@ -44,6 +76,15 @@ final class BuildEngine: ObservableObject {
         lastError = nil
         logLines = ["▸ \(buildCommandSummary(for: project))"]
         buildStartedAt = .now
+        elapsedSeconds = 0
+
+        let recentDurations = history.builds
+            .filter { $0.projectId == project.id && $0.status == .success }
+            .prefix(5)
+            .map(\.durationSeconds)
+        expectedDuration = BuildProgressEstimator.expectedDuration(from: Array(recentDurations))
+        estimatedProgress = BuildProgressEstimator.progress(elapsed: 0, expected: expectedDuration)
+        startProgressTicker()
 
         let channel = EagerLineChannel()
         let box = ExitCodeBox()
@@ -105,6 +146,8 @@ final class BuildEngine: ObservableObject {
         currentProjectName = nil
         logLines.removeAll()
         buildStartedAt = nil
+        elapsedSeconds = 0
+        estimatedProgress = nil
     }
 
     private func buildCommandSummary(for project: Project) -> String {
@@ -112,9 +155,32 @@ final class BuildEngine: ObservableObject {
         return "xcodebuild " + args.joined(separator: " ")
     }
 
+    /// Ticks elapsed time + the derived progress estimate every half second
+    /// while a build is running.
+    private func startProgressTicker() {
+        progressTicker?.cancel()
+        progressTicker = Task { [weak self] in
+            while let self, !Task.isCancelled, self.isBuilding {
+                if let startedAt = self.buildStartedAt {
+                    let elapsed = Date().timeIntervalSince(startedAt)
+                    self.elapsedSeconds = elapsed
+                    self.estimatedProgress = BuildProgressEstimator.progress(elapsed: elapsed, expected: self.expectedDuration)
+                }
+                try? await Task.sleep(nanoseconds: 500_000_000)
+            }
+        }
+    }
+
+    private func stopProgressTicker() {
+        progressTicker?.cancel()
+        progressTicker = nil
+    }
+
     private func finalize(exitCode: Int32) async {
         let startedAt = buildStartedAt ?? .now
         let duration = Date().timeIntervalSince(startedAt)
+        stopProgressTicker()
+        estimatedProgress = 1
         defer {
             process = nil
             channel = nil

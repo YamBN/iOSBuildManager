@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.2.0"
-    static let buildNumber: String = "3"
+    static let version: String = "1.3.0"
+    static let buildNumber: String = "4"
 
     // MARK: - Credits
 
@@ -33,7 +33,7 @@ enum AppVersion {
         "macOS notifications on build success and failure",
         "Code-signature check before packaging",
         "Xcode Run Script helper — package after every Xcode build, no build loops",
-        "Menu bar panel with build actions, recent builds, and project switcher",
+        "Menu bar panel with build actions, live build progress, a device-picker submenu, recent builds, and project switcher",
         "Checks GitHub for new releases on launch (optional, no telemetry)",
         "Dark / Light / System themes; local-only, no analytics",
     ]
@@ -70,6 +70,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.3.0", date: "2026-07-09", type: .minor,
+              summary: "Menu bar panel now shows live build progress with percentage and elapsed time, and Install on Device is a proper device-picker submenu instead of silently installing to the first device."),
         .init(version: "1.2.0", date: "2026-07-09", type: .minor,
               summary: "Checks GitHub for new releases on launch and offers a one-click download; fixed the sidebar rendering flat gray instead of matching the app's navy glass background."),
         .init(version: "1.1.0", date: "2026-07-08", type: .minor,

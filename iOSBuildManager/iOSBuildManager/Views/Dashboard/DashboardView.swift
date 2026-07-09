@@ -196,19 +196,32 @@ private struct BuildStatusCard: View {
                 if engine.isBuilding {
                     HStack(alignment: .top, spacing: 14) {
                         StatusCircle(systemImage: "gearshape.2.fill", color: .blue, size: 56)
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Building…")
                                 .font(.title3.weight(.bold))
                             Text(engine.currentProjectName ?? "")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
+
+                            if let progress = engine.estimatedProgress {
+                                ProgressView(value: progress, total: 1)
+                                Text("\(Int(progress * 100))% • \(BuildProgressEstimator.formattedElapsed(engine.elapsedSeconds)) elapsed")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ProgressView()
+                                Text("\(BuildProgressEstimator.formattedElapsed(engine.elapsedSeconds)) elapsed")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
                             Button(role: .destructive) { engine.cancel() } label: {
                                 Label("Cancel", systemImage: "stop.fill")
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
-                            .padding(.top, 4)
+                            .padding(.top, 2)
                         }
                     }
                 } else if let record = lastRecord {
