@@ -116,10 +116,26 @@ warning that direct device installs won't work.
 **Settings → Advanced → Scheduled Builds** installs a LaunchAgent at
 `~/Library/LaunchAgents/com.yambn.iOSBuildManager.scheduler.plist` that:
 
-1. Rebuilds your project every N days (6 by default — inside the 7-day window)
+1. Rebuilds your project on your schedule (inside the 7-day signing window)
 2. Repackages and refreshes `latest.ipa` in iCloud
 3. Re-installs onto your iPhone if it's connected
 4. Posts a notification either way
+
+Pick the cadence that suits you:
+
+- **Every N days** — a rolling interval (default 6, matches free provisioning).
+- **Daily** — at a fixed time.
+- **Weekly** — choose the weekdays *and* the time of day.
+
+The app keeps running in the menu bar after you close its window, so the
+schedule and quick actions stay available in the background.
+
+### Keep apps alive with no computer (iPhone side)
+
+For the *device* half — re-signing already-installed apps on your iPhone
+automatically, without a Mac — see
+**[docs/iphone-auto-refresh.md](docs/iphone-auto-refresh.md)**: a Shortcuts
+automation (SideStore VPN → Refresh All → VPN off) on a weekly schedule.
 
 ## Project structure
 

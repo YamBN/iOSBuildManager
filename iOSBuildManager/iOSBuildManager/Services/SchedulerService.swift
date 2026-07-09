@@ -48,15 +48,14 @@ enum SchedulerService {
         // Unload any existing agent before rewriting it.
         try? await disable()
 
-        let intervalSeconds = max(settings.scheduledBuildIntervalDays, 1) * 86_400
-        let plist: [String: Any] = [
+        var plist: [String: Any] = [
             "Label": AppPaths.schedulerIdentifier,
             "ProgramArguments": ["/bin/sh", AppPaths.scheduledBuildScriptURL.path],
-            "StartInterval": intervalSeconds,
             "RunAtLoad": false,
             "StandardOutPath": AppPaths.logsURL.appendingPathComponent("scheduler.log").path,
             "StandardErrorPath": AppPaths.logsURL.appendingPathComponent("scheduler.err").path
         ]
+        for (key, value) in schedulingKeys(for: settings) { plist[key] = value }
 
         let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
         try data.write(to: AppPaths.launchAgentURL, options: .atomic)
@@ -65,6 +64,47 @@ enum SchedulerService {
             command: "/bin/launchctl",
             arguments: ["load", "-w", AppPaths.launchAgentURL.path]
         )
+    }
+
+    /// Builds the launchd trigger keys for the chosen frequency.
+    ///
+    /// - `everyNDays` → `StartInterval` (~every N days from load).
+    /// - `daily`      → `StartCalendarInterval` at Hour:Minute every day.
+    /// - `weekly`     → `StartCalendarInterval`, one entry per chosen weekday
+    ///   at Hour:Minute (launchd Weekday: 0 = Sunday … 6 = Saturday).
+    static func schedulingKeys(for settings: AppSettings) -> [String: Any] {
+        let hour = min(max(settings.scheduleHour, 0), 23)
+        let minute = min(max(settings.scheduleMinute, 0), 59)
+
+        switch settings.scheduleFrequency {
+        case .everyNDays:
+            return ["StartInterval": max(settings.scheduledBuildIntervalDays, 1) * 86_400]
+        case .daily:
+            return ["StartCalendarInterval": ["Hour": hour, "Minute": minute]]
+        case .weekly:
+            let days = settings.scheduleWeekdays.isEmpty ? [1] : settings.scheduleWeekdays
+            let entries = days.sorted().map { day -> [String: Int] in
+                ["Weekday": min(max(day, 0), 6), "Hour": hour, "Minute": minute]
+            }
+            return ["StartCalendarInterval": entries]
+        }
+    }
+
+    /// A short human summary of the current schedule, for the UI.
+    static func summary(for settings: AppSettings) -> String {
+        let time = String(format: "%02d:%02d", settings.scheduleHour, settings.scheduleMinute)
+        switch settings.scheduleFrequency {
+        case .everyNDays:
+            let n = max(settings.scheduledBuildIntervalDays, 1)
+            return "Every \(n) day\(n == 1 ? "" : "s")"
+        case .daily:
+            return "Every day at \(time)"
+        case .weekly:
+            let days = settings.scheduleWeekdays.isEmpty
+                ? "no days selected"
+                : settings.scheduleWeekdays.sorted().map { Weekday.shortName($0) }.joined(separator: ", ")
+            return "\(days) at \(time)"
+        }
     }
 
     /// Unloads and removes the LaunchAgent.

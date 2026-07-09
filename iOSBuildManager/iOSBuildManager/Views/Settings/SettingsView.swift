@@ -618,7 +618,7 @@ private struct AdvancedSettingsTab: View {
             VStack(alignment: .leading, spacing: 14) {
                 SectionHeader(title: "Scheduled Builds", systemImage: "clock.badge.checkmark")
 
-                Text("Uses a LaunchAgent to run a build + package every N days. Recommended default: every 6 days (matches the 7-day SideStore/AltStore refresh window).")
+                Text("Installs a LaunchAgent that rebuilds and repackages on a schedule — even when the app is closed. Recommended for free provisioning: within the 7-day signing window.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
@@ -628,30 +628,38 @@ private struct AdvancedSettingsTab: View {
                 ))
 
                 if settings.settings.scheduledBuildsEnabled {
-                    HStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Interval (days)").font(.subheadline.weight(.medium))
-                            Stepper("\(settings.settings.scheduledBuildIntervalDays) days",
-                                    value: Binding(
-                                        get: { settings.settings.scheduledBuildIntervalDays },
-                                        set: { settings.settings.scheduledBuildIntervalDays = max(1, $0) }
-                                    ),
-                                    in: 1...30)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Project").font(.subheadline.weight(.medium))
+                        Picker("Project", selection: Binding(
+                            get: { settings.settings.scheduledProjectId },
+                            set: { settings.settings.scheduledProjectId = $0 }
+                        )) {
+                            Text("Choose…").tag(UUID?.none)
+                            ForEach(projects.projects) { Text($0.name).tag(Optional($0.id)) }
                         }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Project").font(.subheadline.weight(.medium))
-                            Picker("Project", selection: Binding(
-                                get: { settings.settings.scheduledProjectId },
-                                set: { settings.settings.scheduledProjectId = $0 }
-                            )) {
-                                Text("Choose…").tag(UUID?.none)
-                                ForEach(projects.projects) { Text($0.name).tag(Optional($0.id)) }
-                            }
-                            .pickerStyle(.menu)
-                            .frame(width: 240)
-                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 260)
                     }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Frequency").font(.subheadline.weight(.medium))
+                        Picker("Frequency", selection: Binding(
+                            get: { settings.settings.scheduleFrequency },
+                            set: { settings.settings.scheduleFrequency = $0 }
+                        )) {
+                            ForEach(ScheduleFrequency.allCases) { Text($0.displayName).tag($0) }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: 360)
+                    }
+
+                    frequencyControls
+
+                    Text(SchedulerService.summary(for: settings.settings))
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 HStack {
@@ -679,6 +687,84 @@ private struct AdvancedSettingsTab: View {
                 }
             }
         }
+    }
+
+    /// The controls that change per frequency: interval days, a time picker,
+    /// and/or a weekday selector.
+    @ViewBuilder
+    private var frequencyControls: some View {
+        switch settings.settings.scheduleFrequency {
+        case .everyNDays:
+            HStack {
+                Text("Rebuild every").font(.subheadline.weight(.medium))
+                Stepper("\(settings.settings.scheduledBuildIntervalDays) day\(settings.settings.scheduledBuildIntervalDays == 1 ? "" : "s")",
+                        value: Binding(
+                            get: { settings.settings.scheduledBuildIntervalDays },
+                            set: { settings.settings.scheduledBuildIntervalDays = max(1, $0) }
+                        ),
+                        in: 1...30)
+                Spacer()
+            }
+
+        case .daily:
+            HStack(spacing: 10) {
+                Text("At").font(.subheadline.weight(.medium))
+                DatePicker("", selection: scheduleTime, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                Spacer()
+            }
+
+        case .weekly:
+            VStack(alignment: .leading, spacing: 10) {
+                weekdaySelector
+                HStack(spacing: 10) {
+                    Text("At").font(.subheadline.weight(.medium))
+                    DatePicker("", selection: scheduleTime, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    private var weekdaySelector: some View {
+        HStack(spacing: 6) {
+            ForEach(Weekday.all, id: \.self) { day in
+                let isOn = settings.settings.scheduleWeekdays.contains(day)
+                Button {
+                    var days = Set(settings.settings.scheduleWeekdays)
+                    if isOn { days.remove(day) } else { days.insert(day) }
+                    settings.settings.scheduleWeekdays = days.sorted()
+                } label: {
+                    Text(Weekday.initial(day))
+                        .font(.subheadline.weight(.semibold))
+                        .frame(width: 30, height: 30)
+                        .background(
+                            Circle().fill(isOn ? Color.accentColor : Color.primary.opacity(0.08))
+                        )
+                        .foregroundStyle(isOn ? .white : .primary)
+                }
+                .buttonStyle(.plain)
+                .help(Weekday.shortName(day))
+            }
+        }
+    }
+
+    /// Bridges the stored hour/minute to a `Date` for the time picker.
+    private var scheduleTime: Binding<Date> {
+        Binding(
+            get: {
+                var comps = DateComponents()
+                comps.hour = settings.settings.scheduleHour
+                comps.minute = settings.settings.scheduleMinute
+                return Calendar.current.date(from: comps) ?? Date()
+            },
+            set: { newValue in
+                let comps = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                settings.settings.scheduleHour = comps.hour ?? 3
+                settings.settings.scheduleMinute = comps.minute ?? 0
+            }
+        )
     }
 
     private var appearanceCard: some View {

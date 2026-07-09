@@ -101,8 +101,8 @@ struct MenuBarMenu: View {
             divider
 
             PanelRow(icon: "gearshape", title: "Open iOS Build Manager", shortcut: nil) {
+                activateAsRegularApp()
                 openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
                 closePanel()
             }
 
@@ -173,8 +173,8 @@ struct MenuBarMenu: View {
 
             Button {
                 model.selection = .settings
+                activateAsRegularApp()
                 openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
                 closePanel()
             } label: {
                 Image(systemName: "chevron.right")

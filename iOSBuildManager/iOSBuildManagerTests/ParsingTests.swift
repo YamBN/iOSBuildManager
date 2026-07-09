@@ -85,6 +85,53 @@ final class DeviceParsingTests: XCTestCase {
     }
 }
 
+final class SchedulerKeyTests: XCTestCase {
+    func testEveryNDaysUsesStartInterval() {
+        var s = AppSettings()
+        s.scheduleFrequency = .everyNDays
+        s.scheduledBuildIntervalDays = 6
+        let keys = SchedulerService.schedulingKeys(for: s)
+        XCTAssertEqual(keys["StartInterval"] as? Int, 6 * 86_400)
+        XCTAssertNil(keys["StartCalendarInterval"])
+    }
+
+    func testDailyUsesCalendarIntervalAtTime() {
+        var s = AppSettings()
+        s.scheduleFrequency = .daily
+        s.scheduleHour = 9
+        s.scheduleMinute = 30
+        let keys = SchedulerService.schedulingKeys(for: s)
+        let cal = keys["StartCalendarInterval"] as? [String: Int]
+        XCTAssertEqual(cal?["Hour"], 9)
+        XCTAssertEqual(cal?["Minute"], 30)
+        XCTAssertNil(cal?["Weekday"])
+        XCTAssertNil(keys["StartInterval"])
+    }
+
+    func testWeeklyEmitsOneEntryPerWeekdayAtTime() {
+        var s = AppSettings()
+        s.scheduleFrequency = .weekly
+        s.scheduleWeekdays = [4, 1] // Thu, Mon (unsorted on purpose)
+        s.scheduleHour = 22
+        s.scheduleMinute = 15
+        let keys = SchedulerService.schedulingKeys(for: s)
+        let entries = keys["StartCalendarInterval"] as? [[String: Int]]
+        XCTAssertEqual(entries?.count, 2)
+        XCTAssertEqual(entries?.map { $0["Weekday"] }, [1, 4]) // sorted
+        XCTAssertTrue(entries?.allSatisfy { $0["Hour"] == 22 && $0["Minute"] == 15 } ?? false)
+    }
+
+    func testOutOfRangeTimeIsClamped() {
+        var s = AppSettings()
+        s.scheduleFrequency = .daily
+        s.scheduleHour = 99
+        s.scheduleMinute = -5
+        let cal = SchedulerService.schedulingKeys(for: s)["StartCalendarInterval"] as? [String: Int]
+        XCTAssertEqual(cal?["Hour"], 23)
+        XCTAssertEqual(cal?["Minute"], 0)
+    }
+}
+
 final class SigningIdentityTests: XCTestCase {
     func testTeamIdIsParsedFromCommonName() {
         let identity = SigningIdentity(

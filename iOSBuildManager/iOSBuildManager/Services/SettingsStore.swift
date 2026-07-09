@@ -31,6 +31,34 @@ enum AppTheme: String, Codable, CaseIterable, Sendable, Identifiable, Hashable {
     }
 }
 
+/// How scheduled builds recur.
+enum ScheduleFrequency: String, Codable, CaseIterable, Sendable, Identifiable, Hashable {
+    case everyNDays   // launchd StartInterval (roughly every N days from load)
+    case daily        // launchd StartCalendarInterval at a fixed time
+    case weekly       // launchd StartCalendarInterval on chosen weekdays at a time
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .everyNDays: return "Every N Days"
+        case .daily: return "Daily"
+        case .weekly: return "Weekly"
+        }
+    }
+}
+
+/// Weekday helpers using launchd's convention: 0 = Sunday … 6 = Saturday.
+enum Weekday {
+    static let all = Array(0...6)
+    static func shortName(_ index: Int) -> String {
+        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][((index % 7) + 7) % 7]
+    }
+    static func initial(_ index: Int) -> String {
+        ["S", "M", "T", "W", "T", "F", "S"][((index % 7) + 7) % 7]
+    }
+}
+
 /// Persisted user preferences. Stored as JSON in Application Support.
 struct AppSettings: Codable, Sendable, Hashable {
     var outputURL: URL = AppPaths.defaultOutputURL
@@ -44,6 +72,10 @@ struct AppSettings: Codable, Sendable, Hashable {
     var scheduledBuildsEnabled: Bool = false
     var scheduledBuildIntervalDays: Int = 6
     var scheduledProjectId: UUID? = nil
+    var scheduleFrequency: ScheduleFrequency = .everyNDays
+    var scheduleHour: Int = 3            // 0–23, used by daily/weekly
+    var scheduleMinute: Int = 0          // 0–59
+    var scheduleWeekdays: [Int] = [1, 4] // Mon, Thu (launchd 0=Sun…6=Sat)
 
     init() {}
 
@@ -64,6 +96,10 @@ struct AppSettings: Codable, Sendable, Hashable {
         scheduledBuildsEnabled = try c.decodeIfPresent(Bool.self, forKey: .scheduledBuildsEnabled) ?? defaults.scheduledBuildsEnabled
         scheduledBuildIntervalDays = try c.decodeIfPresent(Int.self, forKey: .scheduledBuildIntervalDays) ?? defaults.scheduledBuildIntervalDays
         scheduledProjectId = try c.decodeIfPresent(UUID.self, forKey: .scheduledProjectId) ?? defaults.scheduledProjectId
+        scheduleFrequency = try c.decodeIfPresent(ScheduleFrequency.self, forKey: .scheduleFrequency) ?? defaults.scheduleFrequency
+        scheduleHour = try c.decodeIfPresent(Int.self, forKey: .scheduleHour) ?? defaults.scheduleHour
+        scheduleMinute = try c.decodeIfPresent(Int.self, forKey: .scheduleMinute) ?? defaults.scheduleMinute
+        scheduleWeekdays = try c.decodeIfPresent([Int].self, forKey: .scheduleWeekdays) ?? defaults.scheduleWeekdays
     }
 }
 

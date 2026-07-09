@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.0.0"
-    static let buildNumber: String = "1"
+    static let version: String = "1.1.0"
+    static let buildNumber: String = "2"
 
     // MARK: - Credits
 
@@ -28,7 +28,8 @@ enum AppVersion {
         "Signing-expiry warning banner for the free-Apple-ID 7-day cycle",
         "Accurate device detection via devicectl — only reachable devices are install targets",
         "Install on device with one click (devicectl)",
-        "Scheduled builds via LaunchAgent, with automatic device re-install",
+        "Flexible scheduled builds — every N days, daily, or weekly on chosen days at a set time",
+        "Runs in the menu bar; closing the window keeps it working in the background",
         "macOS notifications on build success and failure",
         "Code-signature check before packaging",
         "Xcode Run Script helper — package after every Xcode build, no build loops",
@@ -68,6 +69,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.1.0", date: "2026-07-08", type: .minor,
+              summary: "Flexible scheduling (every N days, daily, or weekly on chosen days at a set time), and the app now keeps running in the menu bar when you close its window."),
         .init(version: "1.0.0", date: "2026-07-08", type: .major,
               summary: "First public release: build, package, and ship IPAs for the free-Apple-ID sideloading workflow — with signing management, scheduled rebuilds, device installs, notifications, and a menu bar panel."),
     ]

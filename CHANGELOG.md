@@ -5,6 +5,15 @@ The source of truth for the app version is `iOSBuildManager/iOSBuildManager/Mode
 (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) are kept in sync. The in-app
 About / Settings screens show the latest 3 entries below.
 
+## 1.1.0 — 2026-07-08
+
+- Flexible scheduled builds: **Every N days**, **Daily** at a set time, or
+  **Weekly** on chosen weekdays at a set time (launchd `StartCalendarInterval`).
+- The app now keeps running in the **menu bar** after you close its window
+  (no Dock icon), so scheduled builds and quick actions stay available.
+- New guide: [keeping sideloaded apps alive with no computer](docs/iphone-auto-refresh.md)
+  — an on-iPhone SideStore + Shortcuts automation.
+
 ## 1.0.0 — 2026-07-08
 
 First public release.
