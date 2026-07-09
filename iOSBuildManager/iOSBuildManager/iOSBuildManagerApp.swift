@@ -25,7 +25,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         false
     }
 
-    @objc private func mainWindowWillClose(_ note: Notification) {
+    // Window notifications post on the main thread; `@MainActor` lets us read
+    // the window's (main-actor-isolated) identifier/title.
+    @MainActor @objc private func mainWindowWillClose(_ note: Notification) {
         guard let window = note.object as? NSWindow,
               window.identifier?.rawValue == "main" || window.title == "iOS Build Manager"
         else { return }
