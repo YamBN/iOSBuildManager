@@ -14,6 +14,13 @@ struct MenuBarMenu: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismiss) private var dismiss
 
+    /// Drives the device-picker flyout that opens to the right of the row.
+    /// It opens on hover and stays open while the pointer is over either the
+    /// row or the flyout itself; the two `hover` flags feed `syncDevicePicker`.
+    @State private var showDevicePicker = false
+    @State private var isRowHovered = false
+    @State private var isFlyoutHovered = false
+
     private var project: Project? {
         model.selectedProject ?? projects.projects.first
     }
@@ -155,47 +162,70 @@ struct MenuBarMenu: View {
 
     // MARK: - Install on device
 
-    /// A `Menu` (not a plain row) — the destination is ambiguous when more
-    /// than one device is connected, so this always shows the device list
-    /// rather than silently guessing which one to install to.
+    /// A plain `PanelRow` (so it lines up pixel-for-pixel with its siblings)
+    /// whose disclosure chevron opens a device-picker flyout to the *right*
+    /// — the destination is ambiguous with more than one device connected, so
+    /// this always shows the list rather than silently guessing.
     private var installOnDeviceRow: some View {
-        Menu {
+        PanelRow(icon: "iphone", title: "Install on Device", shortcut: nil, showsDisclosure: true) {
+            // Click also works, but hover is the primary way in.
+            showDevicePicker = true
+        }
+        .disabled(latest == nil)
+        .onHover { hovering in
+            isRowHovered = hovering
+            if hovering && latest != nil { Task { await devices.refresh() } }
+            syncDevicePicker()
+        }
+        .popover(isPresented: $showDevicePicker, arrowEdge: .trailing) {
+            devicePickerFlyout
+                .onHover { isFlyoutHovered = $0; syncDevicePicker() }
+        }
+    }
+
+    /// Opens the flyout as soon as the row is hovered and keeps it open while
+    /// the pointer is over the row or the flyout; a short grace period lets the
+    /// pointer cross the gap between them without the flyout snapping shut.
+    private func syncDevicePicker() {
+        guard latest != nil else { return }
+        if isRowHovered || isFlyoutHovered {
+            showDevicePicker = true
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                if !isRowHovered && !isFlyoutHovered {
+                    showDevicePicker = false
+                }
+            }
+        }
+    }
+
+    private var devicePickerFlyout: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            sectionLabel("Install On")
             if devices.devices.isEmpty {
-                Text("No Devices Connected")
+                Text(devices.isRefreshing ? "Searching…" : "No devices connected")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
             } else {
                 ForEach(devices.devices) { destination in
                     if case .connectedDevice(let id, let name) = destination {
-                        Button(name) {
+                        PanelRow(icon: "iphone", title: name, shortcut: nil) {
+                            showDevicePicker = false
                             installOnDevice(id: id, name: name)
                         }
                     }
                 }
             }
-            Divider()
-            Button("Refresh Devices") {
+            divider
+            PanelRow(icon: "arrow.clockwise", title: "Refresh Devices", shortcut: nil) {
                 Task { await devices.refresh() }
             }
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "iphone")
-                    .frame(width: 20)
-                Text("Install on Device")
-                Spacer(minLength: 12)
-                if devices.isRefreshing {
-                    ProgressView().controlSize(.small)
-                } else if !devices.devices.isEmpty {
-                    Text("\(devices.devices.count)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .font(.callout)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .contentShape(Rectangle())
         }
-        .menuStyle(.borderlessButton)
-        .disabled(latest == nil)
+        .padding(8)
+        .frame(width: 240)
+        .preferredColorScheme(settings.settings.theme.colorScheme)
     }
 
     private func installOnDevice(id: String, name: String) {
@@ -331,6 +361,7 @@ private struct PanelRow: View {
     let icon: String
     let title: String
     let shortcut: String?
+    var showsDisclosure: Bool = false
     let action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
@@ -343,7 +374,11 @@ private struct PanelRow: View {
                     .frame(width: 20)
                 Text(title)
                 Spacer(minLength: 12)
-                if let shortcut {
+                if showsDisclosure {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(isHovering ? Color.white.opacity(0.8) : Color.secondary)
+                } else if let shortcut {
                     Text(shortcut)
                         .foregroundStyle(isHovering ? Color.white.opacity(0.8) : Color.secondary)
                 }

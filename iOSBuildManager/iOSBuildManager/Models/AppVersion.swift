@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.3.0"
-    static let buildNumber: String = "4"
+    static let version: String = "1.3.1"
+    static let buildNumber: String = "5"
 
     // MARK: - Credits
 
@@ -70,6 +70,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.3.1", date: "2026-07-09", type: .patch,
+              summary: "The menu bar's Install on Device row now lines up with its neighbours and opens a device-picker flyout to the right on hover — no click, no misaligned badge."),
         .init(version: "1.3.0", date: "2026-07-09", type: .minor,
               summary: "Menu bar panel now shows live build progress with percentage and elapsed time, and Install on Device is a proper device-picker submenu instead of silently installing to the first device."),
         .init(version: "1.2.0", date: "2026-07-09", type: .minor,
