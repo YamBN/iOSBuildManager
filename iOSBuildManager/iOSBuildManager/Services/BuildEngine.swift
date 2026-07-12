@@ -5,6 +5,11 @@ import SwiftUI
 /// into a progress estimate — `xcodebuild` doesn't expose a real percentage,
 /// so this approximates one from the project's own build history.
 enum BuildProgressEstimator {
+    /// Fallback estimate used for a project's first build, before there's any
+    /// history to average — keeps a moving percentage bar on screen instead of
+    /// a bare spinner. It self-corrects once real durations are recorded.
+    static let defaultExpectedDuration: Double = 60
+
     /// Mean of the last few successful build durations, or nil with no history.
     static func expectedDuration(from recentDurations: [Double]) -> Double? {
         guard !recentDurations.isEmpty else { return nil }
@@ -83,6 +88,7 @@ final class BuildEngine: ObservableObject {
             .prefix(5)
             .map(\.durationSeconds)
         expectedDuration = BuildProgressEstimator.expectedDuration(from: Array(recentDurations))
+            ?? BuildProgressEstimator.defaultExpectedDuration
         estimatedProgress = BuildProgressEstimator.progress(elapsed: 0, expected: expectedDuration)
         startProgressTicker()
 
@@ -91,10 +97,11 @@ final class BuildEngine: ObservableObject {
         self.channel = channel
         self.exitBox = box
 
+        let invocation = Self.buildInvocation(for: project)
         let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: XcodeBuildService.xcodebuildPath)
-        proc.arguments = XcodeBuildService.buildArguments(for: project)
-        proc.currentDirectoryURL = project.fileURL.deletingLastPathComponent()
+        proc.executableURL = URL(fileURLWithPath: invocation.executable)
+        proc.arguments = invocation.arguments
+        proc.currentDirectoryURL = invocation.cwd
 
         let pipe = Pipe()
         proc.standardOutput = pipe
@@ -150,9 +157,22 @@ final class BuildEngine: ObservableObject {
         estimatedProgress = nil
     }
 
+    /// The command, arguments, and working directory used to build a project —
+    /// `xcodebuild` for Xcode projects/workspaces, `swift build` for packages.
+    static func buildInvocation(for project: Project) -> (executable: String, arguments: [String], cwd: URL) {
+        if project.kind == .swiftPackage {
+            return (SwiftPackageService.swiftPath,
+                    SwiftPackageService.buildArguments(product: project.selectedScheme, configuration: project.configuration),
+                    project.workingDirectory)
+        }
+        return (XcodeBuildService.xcodebuildPath,
+                XcodeBuildService.buildArguments(for: project),
+                project.workingDirectory)
+    }
+
     private func buildCommandSummary(for project: Project) -> String {
-        let args = XcodeBuildService.buildArguments(for: project)
-        return "xcodebuild " + args.joined(separator: " ")
+        let invocation = Self.buildInvocation(for: project)
+        return (invocation.executable as NSString).lastPathComponent + " " + invocation.arguments.joined(separator: " ")
     }
 
     /// Ticks elapsed time + the derived progress estimate every half second
@@ -210,36 +230,58 @@ final class BuildEngine: ObservableObject {
         }
 
         do {
-            let appURL = try XcodeBuildService.locateApp(for: project)
+            let appURL: URL
+            if project.isSwiftPackage {
+                appURL = try await locatePackageApp(project: project)
+                logLines.append("▸ Wrapped executable into app bundle: \(appURL.path)")
+            } else {
+                appURL = try XcodeBuildService.locateApp(for: project)
+            }
             let info = try XcodeBuildService.readAppInfo(at: appURL)
             let appName = appURL.deletingPathExtension().lastPathComponent
 
             logLines.append("▸ Found app: \(appURL.path)")
 
             // Verify the code signature before packaging so nobody discovers a
-            // broken IPA at install time. Unsigned is only a warning: SideStore
-            // and AltStore re-sign IPAs with the user's Apple ID.
+            // broken artifact at install time. Unsigned is only a warning; the
+            // guidance differs by platform.
             if case .genericIOSSimulator = project.destination {
                 logLines.append("▸ Simulator build — skipping signature check (not installable on device).")
             } else if let authority = await XcodeBuildService.codesignAuthority(at: appURL) {
                 logLines.append("▸ Code signature: \(authority)")
+            } else if project.isMac {
+                logLines.append("▸ ⚠️ App is NOT code-signed. Gatekeeper will block it on other Macs until it's signed/notarized, or opened via System Settings → Privacy & Security. To sign: open the project in Xcode → Signing & Capabilities → set a Team.")
             } else {
                 logLines.append("▸ ⚠️ App is NOT code-signed. SideStore/AltStore will re-sign it, but direct device install will fail. To sign: open the project in Xcode → Signing & Capabilities → set a Team.")
             }
 
-            logLines.append("▸ Packaging IPA…")
+            let outputURL: URL
+            if project.isMac {
+                let format = project.resolvedExportFormat
+                logLines.append("▸ Packaging \(format.displayName)…")
+                outputURL = try await MacPackager.export(
+                    format: format,
+                    appURL: appURL,
+                    appName: appName,
+                    version: info.version,
+                    buildNumber: info.buildNumber,
+                    outputFolder: settings.outputURL,
+                    keepLatest: settings.keepLatestIPA
+                )
+            } else {
+                logLines.append("▸ Packaging IPA…")
+                outputURL = try await IPAPackager.pack(
+                    appURL: appURL,
+                    appName: appName,
+                    version: info.version,
+                    buildNumber: info.buildNumber,
+                    outputFolder: settings.outputURL,
+                    keepLatest: settings.keepLatestIPA
+                )
+            }
 
-            let ipaURL = try await IPAPackager.pack(
-                appURL: appURL,
-                appName: appName,
-                version: info.version,
-                buildNumber: info.buildNumber,
-                outputFolder: settings.outputURL,
-                keepLatest: settings.keepLatestIPA
-            )
-
-            let size = IPAPackager.fileSize(at: ipaURL)
-            logLines.append("▸ IPA ready: \(ipaURL.path) (\(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)))")
+            let size = IPAPackager.fileSize(at: outputURL)
+            logLines.append("▸ Ready: \(outputURL.path) (\(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)))")
 
             let record = BuildRecord(
                 projectId: project.id,
@@ -251,7 +293,7 @@ final class BuildEngine: ObservableObject {
                 date: .now,
                 sizeBytes: size,
                 status: .success,
-                outputURL: ipaURL,
+                outputURL: outputURL,
                 appPath: appURL.path,
                 durationSeconds: duration,
                 log: logLines.joined(separator: "\n")
@@ -276,6 +318,32 @@ final class BuildEngine: ObservableObject {
             status = .failed
             notifyIfEnabled(settings: settings, projectName: project.name, success: false, detail: error.localizedDescription)
         }
+    }
+
+    /// Locates the executable produced by `swift build` and wraps it in a
+    /// minimal `.app` so the rest of the pipeline (signing check, packaging)
+    /// can treat it like any other Mac app.
+    private func locatePackageApp(project: Project) async throws -> URL {
+        let binPath = try await SwiftPackageService.binPath(
+            packageDir: project.workingDirectory,
+            configuration: project.configuration
+        )
+        let product = project.selectedScheme ?? project.name
+        let executable = binPath.appendingPathComponent(product)
+        guard FileManager.default.fileExists(atPath: executable.path) else {
+            throw BuildError.packagingFailed("Built executable '\(product)' not found at \(executable.path). Pick the correct product in Settings.")
+        }
+        let container = project.workingDirectory.appendingPathComponent(".build/packaged", isDirectory: true)
+        try? FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+        let bundleId = "com.iosbuildmanager." + product.lowercased().replacingOccurrences(of: " ", with: "-")
+        return try SwiftPackageService.wrapExecutableInApp(
+            executableURL: executable,
+            appName: product,
+            bundleIdentifier: bundleId,
+            version: "1.0",
+            buildNumber: "1",
+            containerDir: container
+        )
     }
 
     private func notifyIfEnabled(settings: AppSettings, projectName: String, success: Bool, detail: String) {

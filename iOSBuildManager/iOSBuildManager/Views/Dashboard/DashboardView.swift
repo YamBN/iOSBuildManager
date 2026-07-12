@@ -110,7 +110,9 @@ private struct LatestBuildCard: View {
     private var latest: BuildRecord? { history.mostRecentSuccess }
 
     private var fileLabel: String {
-        settings.settings.keepLatestIPA ? "latest.ipa" : (latest?.fileName ?? "")
+        guard let latest else { return "" }
+        // Reflect the real artifact type (ipa / dmg / zip), not a hardcoded ipa.
+        return settings.settings.keepLatestIPA ? "latest.\(latest.outputURL.pathExtension)" : latest.fileName
     }
 
     var body: some View {
@@ -120,7 +122,7 @@ private struct LatestBuildCard: View {
 
                 if let latest {
                     HStack(spacing: 12) {
-                        IconBadge(systemImage: "shippingbox.fill", size: 46)
+                        ProjectIconBadge(appPath: latest.appPath, size: 46)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("\(latest.projectName) \(latest.version) (\(latest.buildNumber))")
                                 .font(.title3.weight(.bold))

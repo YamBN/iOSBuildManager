@@ -37,11 +37,15 @@
 		D0461C8EC5A7C51E9C257007 /* CertificateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37161B634C376DF4C41725A8 /* CertificateService.swift */; };
 		63F44F5A34D0A598C4CFF673 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75032ED1017BFDAFF67E2D25 /* NotificationService.swift */; };
 		023F8EF09608023B6AB4B69E /* UpdateCheckService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D93BBC2B48A51A93DD1D57A /* UpdateCheckService.swift */; };
+		5DBBAF4E5C642A3FF0DEFF7F /* AppIconExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A090C8330D07D0B4B962A92D /* AppIconExtractor.swift */; };
+		3465250B4EC16B406B588624 /* MacPackager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 654757089030079336858C60 /* MacPackager.swift */; };
+		EF2BACB29DD5F17D0328CFAF /* SwiftPackageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94EF14BEA45D91CE67EC7D4E /* SwiftPackageService.swift */; };
 		7C04627AABF6E79191945884 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D7F002C65B9C5442DB50754 /* Theme.swift */; };
 		156C6031EB87F4BFE0A9CD0F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 642FB71F1585E4794A08494E /* ContentView.swift */; };
 		B88531B31403C84617E9D9E8 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74FE988F7B833C05D15FF0B6 /* Sidebar.swift */; };
 		89355CB891A54598611C9F68 /* MenuBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E28527116B76AC782390E1B /* MenuBarMenu.swift */; };
 		ADF64A0FFE15229A0B9DAD57 /* UpdateAvailableSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F932F8E24DFCF1FECFE2CC /* UpdateAvailableSheet.swift */; };
+		90938F92A0B93279F608E128 /* ProjectIconBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4C3FDE0D57174BF94E1CF23 /* ProjectIconBadge.swift */; };
 		267B643A870D78E55A6FE876 /* GlassComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D74FC7400EBFFC8283EA5D /* GlassComponents.swift */; };
 		394EEDA48FE61163AC32C3D6 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC86475EE53154B6460BF7B /* EmptyStateView.swift */; };
 		3AD5C0D72AF8C79B7E6EDA99 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4431110C4613C8CBF7D4548C /* DashboardView.swift */; };
@@ -97,11 +101,15 @@
 		37161B634C376DF4C41725A8 /* CertificateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CertificateService.swift"; sourceTree = "<group>"; };
 		75032ED1017BFDAFF67E2D25 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationService.swift"; sourceTree = "<group>"; };
 		8D93BBC2B48A51A93DD1D57A /* UpdateCheckService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpdateCheckService.swift"; sourceTree = "<group>"; };
+		A090C8330D07D0B4B962A92D /* AppIconExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppIconExtractor.swift"; sourceTree = "<group>"; };
+		654757089030079336858C60 /* MacPackager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MacPackager.swift"; sourceTree = "<group>"; };
+		94EF14BEA45D91CE67EC7D4E /* SwiftPackageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftPackageService.swift"; sourceTree = "<group>"; };
 		7D7F002C65B9C5442DB50754 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme.swift"; sourceTree = "<group>"; };
 		642FB71F1585E4794A08494E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
 		74FE988F7B833C05D15FF0B6 /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sidebar.swift"; sourceTree = "<group>"; };
 		9E28527116B76AC782390E1B /* MenuBarMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MenuBarMenu.swift"; sourceTree = "<group>"; };
 		11F932F8E24DFCF1FECFE2CC /* UpdateAvailableSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UpdateAvailableSheet.swift"; sourceTree = "<group>"; };
+		A4C3FDE0D57174BF94E1CF23 /* ProjectIconBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectIconBadge.swift"; sourceTree = "<group>"; };
 		81D74FC7400EBFFC8283EA5D /* GlassComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlassComponents.swift"; sourceTree = "<group>"; };
 		CFC86475EE53154B6460BF7B /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmptyStateView.swift"; sourceTree = "<group>"; };
 		4431110C4613C8CBF7D4548C /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DashboardView.swift"; sourceTree = "<group>"; };
@@ -182,11 +190,15 @@
 				D0461C8EC5A7C51E9C257007 /* CertificateService.swift in Sources */,
 				63F44F5A34D0A598C4CFF673 /* NotificationService.swift in Sources */,
 				023F8EF09608023B6AB4B69E /* UpdateCheckService.swift in Sources */,
+				5DBBAF4E5C642A3FF0DEFF7F /* AppIconExtractor.swift in Sources */,
+				3465250B4EC16B406B588624 /* MacPackager.swift in Sources */,
+				EF2BACB29DD5F17D0328CFAF /* SwiftPackageService.swift in Sources */,
 				7C04627AABF6E79191945884 /* Theme.swift in Sources */,
 				156C6031EB87F4BFE0A9CD0F /* ContentView.swift in Sources */,
 				B88531B31403C84617E9D9E8 /* Sidebar.swift in Sources */,
 				89355CB891A54598611C9F68 /* MenuBarMenu.swift in Sources */,
 				ADF64A0FFE15229A0B9DAD57 /* UpdateAvailableSheet.swift in Sources */,
+				90938F92A0B93279F608E128 /* ProjectIconBadge.swift in Sources */,
 				267B643A870D78E55A6FE876 /* GlassComponents.swift in Sources */,
 				394EEDA48FE61163AC32C3D6 /* EmptyStateView.swift in Sources */,
 				3AD5C0D72AF8C79B7E6EDA99 /* DashboardView.swift in Sources */,
@@ -374,6 +386,9 @@
 				37161B634C376DF4C41725A8,
 				75032ED1017BFDAFF67E2D25,
 				8D93BBC2B48A51A93DD1D57A,
+				A090C8330D07D0B4B962A92D,
+				654757089030079336858C60,
+				94EF14BEA45D91CE67EC7D4E,
 			);
 			name = "Services"; path = "Services"; sourceTree = "<group>";
 		};
@@ -391,6 +406,7 @@
 				74FE988F7B833C05D15FF0B6,
 				9E28527116B76AC782390E1B,
 				11F932F8E24DFCF1FECFE2CC,
+				A4C3FDE0D57174BF94E1CF23,
 				5504FE5F7F8E8C22037D9C20,
 				2A2EAABA34039E93E5CB1772,
 				18CF2C5EAD2E971C82E796B7,
@@ -601,12 +617,12 @@
 				INFOPLIST_KEY_LS_APPLICATION_CATEGORY_TYPE = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Local-only developer tool. No analytics, no tracking.";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yambn.iOSBuildManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				ONLY_ACTIVE_ARCH = YES;
@@ -631,12 +647,12 @@
 				INFOPLIST_KEY_LS_APPLICATION_CATEGORY_TYPE = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Local-only developer tool. No analytics, no tracking.";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yambn.iOSBuildManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				ENABLE_TESTABILITY = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -649,10 +665,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yambn.iOSBuildManagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -669,10 +685,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yambn.iOSBuildManagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;

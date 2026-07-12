@@ -115,16 +115,57 @@ final class AppModel: ObservableObject {
 
     // MARK: - Projects
 
-    func addProject(from url: URL) -> Project {
-        let name = url.deletingPathExtension().lastPathComponent
-        let project = Project(
-            name: name,
-            path: url.path,
-            isWorkspace: Project.isWorkspacePath(url.path)
+    /// Adds a project from a chosen `.xcodeproj`/`.xcworkspace`/`Package.swift`
+    /// or a folder containing one. Returns nil if nothing buildable is found.
+    @discardableResult
+    func addProject(from url: URL) -> Project? {
+        guard let resolved = Self.resolveProjectLocation(url) else { return nil }
+        var project = Project(
+            name: resolved.name,
+            path: resolved.path,
+            isWorkspace: resolved.kind == .xcworkspace
         )
+        project.kindRaw = resolved.kind.rawValue
+        if resolved.kind == .swiftPackage {
+            // We build packages for macOS and default to a DMG.
+            project.detectedPlatform = .macOS
+            project.exportFormat = .dmg
+        }
         projects.upsert(project)
         selectedProjectId = project.id
         return project
+    }
+
+    /// Resolves a user-picked URL to a concrete buildable location and its kind.
+    /// Accepts a project/workspace bundle, a `Package.swift`, or a folder that
+    /// contains any of those.
+    static func resolveProjectLocation(_ url: URL) -> (kind: ProjectKind, path: String, name: String)? {
+        let fm = FileManager.default
+        switch url.pathExtension.lowercased() {
+        case "xcworkspace":
+            return (.xcworkspace, url.path, url.deletingPathExtension().lastPathComponent)
+        case "xcodeproj":
+            return (.xcodeproj, url.path, url.deletingPathExtension().lastPathComponent)
+        default:
+            break
+        }
+        if url.lastPathComponent == "Package.swift" {
+            let dir = url.deletingLastPathComponent()
+            return (.swiftPackage, dir.path, dir.lastPathComponent)
+        }
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue else { return nil }
+        if fm.fileExists(atPath: url.appendingPathComponent("Package.swift").path) {
+            return (.swiftPackage, url.path, url.lastPathComponent)
+        }
+        let contents = (try? fm.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)) ?? []
+        if let ws = contents.first(where: { $0.pathExtension.lowercased() == "xcworkspace" }) {
+            return (.xcworkspace, ws.path, ws.deletingPathExtension().lastPathComponent)
+        }
+        if let proj = contents.first(where: { $0.pathExtension.lowercased() == "xcodeproj" }) {
+            return (.xcodeproj, proj.path, proj.deletingPathExtension().lastPathComponent)
+        }
+        return nil
     }
 
     func deleteProject(_ project: Project) {

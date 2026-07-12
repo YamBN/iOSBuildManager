@@ -54,4 +54,11 @@ final class BuildHistoryStore: ObservableObject {
     var mostRecentSuccess: BuildRecord? {
         builds.sorted(by: { $0.date > $1.date }).first { $0.status == .success }
     }
+
+    /// Most recent successful build for a specific project — used to source
+    /// that project's app icon.
+    func mostRecentSuccess(for projectId: UUID) -> BuildRecord? {
+        builds.sorted(by: { $0.date > $1.date })
+            .first { $0.projectId == projectId && $0.status == .success }
+    }
 }

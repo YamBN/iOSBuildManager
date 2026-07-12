@@ -27,6 +27,13 @@ struct MenuBarMenu: View {
 
     private var latest: BuildRecord? { history.mostRecentSuccess }
 
+    /// The built `.app` whose icon represents the current project (nil → the
+    /// panel shows iOS Build Manager's own icon).
+    private var currentProjectAppPath: String? {
+        guard let project else { return nil }
+        return history.mostRecentSuccess(for: project.id)?.appPath
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             sectionLabel("Current Project")
@@ -36,7 +43,7 @@ struct MenuBarMenu: View {
 
             divider
 
-            PanelRow(icon: "play.fill", title: "Build and Create IPA", shortcut: "⌘B") {
+            PanelRow(icon: "play.fill", title: "Build and Create \(project?.resolvedExportFormat.displayName ?? "IPA")", shortcut: "⌘B") {
                 if let project {
                     model.startBuild(for: project.id)
                 }
@@ -240,7 +247,7 @@ struct MenuBarMenu: View {
 
     private var projectRow: some View {
         HStack(spacing: 10) {
-            IconBadge(systemImage: "shippingbox.fill", size: 40)
+            ProjectIconBadge(appPath: currentProjectAppPath, size: 40)
 
             VStack(alignment: .leading, spacing: 3) {
                 if projects.projects.count > 1 {
@@ -331,6 +338,7 @@ struct MenuBarMenu: View {
         case .genericIOS: return "iOS Device"
         case .genericIOSSimulator: return "Simulator"
         case .connectedDevice(_, let name): return name
+        case .macOS: return "My Mac"
         }
     }
 

@@ -44,9 +44,11 @@ GROUPS = [
                   "SchedulerService.swift", "ScriptGenerator.swift", "SettingsStore.swift",
                   "ShellRunner.swift", "XcodeBuildService.swift",
                   "ProvisioningProfileService.swift", "CertificateService.swift",
-                  "NotificationService.swift", "UpdateCheckService.swift"], []),
+                  "NotificationService.swift", "UpdateCheckService.swift",
+                  "AppIconExtractor.swift", "MacPackager.swift", "SwiftPackageService.swift"], []),
     ("Theme", ["Theme.swift"], []),
-    ("Views", ["ContentView.swift", "Sidebar.swift", "MenuBarMenu.swift", "UpdateAvailableSheet.swift"], VIEWS_SUB),
+    ("Views", ["ContentView.swift", "Sidebar.swift", "MenuBarMenu.swift", "UpdateAvailableSheet.swift",
+               "ProjectIconBadge.swift"], VIEWS_SUB),
 ]
 
 TOP_FILES = ["iOSBuildManagerApp.swift"]
@@ -420,12 +422,12 @@ def main():
         "INFOPLIST_KEY_LS_APPLICATION_CATEGORY_TYPE": "public.app-category.developer-tools",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "Local-only developer tool. No analytics, no tracking.",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @executable_path/../Frameworks",
-        "MARKETING_VERSION": "1.3.1",
+        "MARKETING_VERSION": "1.4.0",
         "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID,
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "SWIFT_EMIT_LOC_STRINGS": "YES",
         "SWIFT_VERSION": "6.0",
-        "CURRENT_PROJECT_VERSION": "5",
+        "CURRENT_PROJECT_VERSION": "6",
     }
     target_debug = dict(common_target)
     target_release = dict(common_target)
@@ -441,10 +443,10 @@ def main():
         "BUNDLE_LOADER": "$(TEST_HOST)",
         "CODE_SIGN_IDENTITY": "-",
         "CODE_SIGN_STYLE": "Automatic",
-        "CURRENT_PROJECT_VERSION": "5",
+        "CURRENT_PROJECT_VERSION": "6",
         "GENERATE_INFOPLIST_FILE": "YES",
         "MACOSX_DEPLOYMENT_TARGET": "13.0",
-        "MARKETING_VERSION": "1.3.1",
+        "MARKETING_VERSION": "1.4.0",
         "PRODUCT_BUNDLE_IDENTIFIER": TEST_BUNDLE_ID,
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "SWIFT_EMIT_LOC_STRINGS": "NO",

@@ -198,6 +198,90 @@ final class SigningIdentityTests: XCTestCase {
     }
 }
 
+final class PlatformDetectionTests: XCTestCase {
+    func testDetectsIOSFromSupportedPlatforms() {
+        let lines = ["    SDKROOT = iphoneos", "    SUPPORTED_PLATFORMS = iphoneos iphonesimulator"]
+        XCTAssertEqual(XcodeBuildService.parsePlatform(fromBuildSettings: lines), .iOS)
+    }
+
+    func testDetectsMacFromSupportedPlatforms() {
+        let lines = ["    SUPPORTED_PLATFORMS = macosx", "    PLATFORM_NAME = macosx"]
+        XCTAssertEqual(XcodeBuildService.parsePlatform(fromBuildSettings: lines), .macOS)
+    }
+
+    func testIOSWinsWhenBothSupported() {
+        // Mac Catalyst targets list both; this app's job is iOS, so iOS wins.
+        let lines = ["    SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx"]
+        XCTAssertEqual(XcodeBuildService.parsePlatform(fromBuildSettings: lines), .iOS)
+    }
+
+    func testUnknownWhenNoPlatformKeys() {
+        XCTAssertEqual(XcodeBuildService.parsePlatform(fromBuildSettings: ["    PRODUCT_NAME = Foo"]), .unknown)
+    }
+
+    func testIgnoresKeysThatMerelyContainThePrefix() {
+        // A line like OTHER_SUPPORTED_PLATFORMS_X must not be mistaken for the key.
+        let lines = ["    SUPPORTED_PLATFORMS_EXTRA = macosx", "    SDKROOT = iphoneos"]
+        XCTAssertEqual(XcodeBuildService.parsePlatform(fromBuildSettings: lines), .iOS)
+    }
+}
+
+final class ExportFormatTests: XCTestCase {
+    func testMacFormatsDefaultToDMGFirst() {
+        XCTAssertEqual(ExportFormat.formats(for: .macOS), [.dmg, .appZip])
+    }
+
+    func testIOSFormatsAreIPAOnly() {
+        XCTAssertEqual(ExportFormat.formats(for: .iOS), [.ipa])
+        XCTAssertEqual(ExportFormat.formats(for: .unknown), [.ipa])
+    }
+
+    func testResolvedExportFormatFallsBackToPlatformDefault() {
+        var project = Project(name: "Mac", path: "/tmp/Mac.xcodeproj", isWorkspace: false)
+        project.detectedPlatform = .macOS
+        // No explicit choice → platform default (DMG).
+        XCTAssertEqual(project.resolvedExportFormat, .dmg)
+        // An iOS-only format on a mac project is ignored in favour of the default.
+        project.exportFormat = .ipa
+        XCTAssertEqual(project.resolvedExportFormat, .dmg)
+        // A valid choice is honoured.
+        project.exportFormat = .appZip
+        XCTAssertEqual(project.resolvedExportFormat, .appZip)
+    }
+}
+
+final class SwiftPackageTests: XCTestCase {
+    func testParsesExecutableProductsOnly() {
+        let json = """
+        {
+          "products": [
+            { "name": "MyLib", "type": { "library": ["automatic"] } },
+            { "name": "MyApp", "type": { "executable": null } },
+            { "name": "MyTool", "type": { "executable": null } }
+          ]
+        }
+        """
+        let names = SwiftPackageService.parseExecutableProducts(dumpPackageJSON: Data(json.utf8))
+        XCTAssertEqual(names, ["MyApp", "MyTool"])
+    }
+
+    func testNoExecutableProducts() {
+        let json = #"{ "products": [ { "name": "OnlyLib", "type": { "library": ["automatic"] } } ] }"#
+        XCTAssertEqual(SwiftPackageService.parseExecutableProducts(dumpPackageJSON: Data(json.utf8)), [])
+    }
+
+    func testMalformedJSONYieldsEmpty() {
+        XCTAssertEqual(SwiftPackageService.parseExecutableProducts(dumpPackageJSON: Data("not json".utf8)), [])
+    }
+
+    func testSwiftBuildArgumentsMapConfiguration() {
+        XCTAssertEqual(SwiftPackageService.buildArguments(product: "App", configuration: .release),
+                       ["build", "-c", "release", "--product", "App"])
+        XCTAssertEqual(SwiftPackageService.buildArguments(product: nil, configuration: .debug),
+                       ["build", "-c", "debug"])
+    }
+}
+
 final class BuildProgressEstimatorTests: XCTestCase {
     func testExpectedDurationIsNilWithNoHistory() {
         XCTAssertNil(BuildProgressEstimator.expectedDuration(from: []))

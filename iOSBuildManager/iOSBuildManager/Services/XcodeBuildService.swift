@@ -37,6 +37,44 @@ enum XcodeBuildService {
         return schemes
     }
 
+    /// Detects whether the project's selected scheme targets iOS or macOS by
+    /// reading `SUPPORTED_PLATFORMS` from `xcodebuild -showBuildSettings`.
+    static func detectPlatform(for project: Project) async -> ProjectPlatform {
+        var args = ["-showBuildSettings"]
+        args += project.isWorkspace ? ["-workspace", project.path] : ["-project", project.path]
+        if let scheme = project.selectedScheme { args += ["-scheme", scheme] }
+        guard let lines = try? await ShellRunner.collect(command: xcodebuildPath, arguments: args) else {
+            return .unknown
+        }
+        return parsePlatform(fromBuildSettings: lines)
+    }
+
+    /// Parses `SUPPORTED_PLATFORMS` (falling back to `PLATFORM_NAME`/`SDKROOT`)
+    /// out of `-showBuildSettings` output. iOS wins when a target supports both
+    /// (e.g. Mac Catalyst) since this app's primary job is iOS sideloading.
+    static func parsePlatform(fromBuildSettings lines: [String]) -> ProjectPlatform {
+        func value(of key: String) -> String? {
+            for raw in lines {
+                let line = raw.trimmingCharacters(in: .whitespaces)
+                if line.hasPrefix(key),
+                   let eq = line.firstIndex(of: "=") {
+                    let lhs = line[..<eq].trimmingCharacters(in: .whitespaces)
+                    guard lhs == key else { continue }
+                    return line[line.index(after: eq)...].trimmingCharacters(in: .whitespaces).lowercased()
+                }
+            }
+            return nil
+        }
+
+        let haystack = [value(of: "SUPPORTED_PLATFORMS"), value(of: "PLATFORM_NAME"), value(of: "SDKROOT")]
+            .compactMap { $0 }
+            .joined(separator: " ")
+
+        if haystack.contains("iphoneos") || haystack.contains("iphonesimulator") { return .iOS }
+        if haystack.contains("macosx") { return .macOS }
+        return .unknown
+    }
+
     /// Builds the `xcodebuild` argument vector for a clean, controlled build.
     static func buildArguments(for project: Project) -> [String] {
         var args: [String] = []
@@ -55,6 +93,7 @@ enum XcodeBuildService {
         switch project.destination {
         case .genericIOSSimulator: platform = "iphonesimulator"
         case .genericIOS, .connectedDevice: platform = "iphoneos"
+        case .macOS: return project.configuration.rawValue  // e.g. Build/Products/Release
         }
         return "\(project.configuration.rawValue)-\(platform)"
     }

@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.3.1"
-    static let buildNumber: String = "5"
+    static let version: String = "1.4.0"
+    static let buildNumber: String = "6"
 
     // MARK: - Credits
 
@@ -20,7 +20,9 @@ enum AppVersion {
 
     /// The complete capability list shown in About.
     static let highlights: [String] = [
-        "One-click builds of any .xcodeproj / .xcworkspace with live log streaming",
+        "One-click builds of any .xcodeproj / .xcworkspace / Swift package with live log streaming",
+        "Builds macOS apps too — export as a .dmg or zipped .app, platform auto-detected from the scheme",
+        "Shows the icon of the app you're building, pulled from its latest build",
         "Automatic IPA packaging (Payload → zip) with versioned names + latest.ipa",
         "iCloud Drive output for SideStore / AltStore / Sideloadly installs",
         "Provisioning profile manager with team and expiry status",
@@ -70,6 +72,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.4.0", date: "2026-07-12", type: .minor,
+              summary: "Build macOS apps and Swift packages, not just iOS: platform is auto-detected from the scheme, packages build with swift build and are wrapped into an app, and you can export a .dmg or zipped .app. The project's real app icon now appears in the panel and dashboard, and the progress bar shows a percentage from the very first build."),
         .init(version: "1.3.1", date: "2026-07-09", type: .patch,
               summary: "The menu bar's Install on Device row now lines up with its neighbours and opens a device-picker flyout to the right on hover — no click, no misaligned badge."),
         .init(version: "1.3.0", date: "2026-07-09", type: .minor,

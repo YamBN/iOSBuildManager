@@ -2,14 +2,16 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Enables only Xcode project/workspace bundles (and plain folders, so the
-/// user can navigate) in the "Add Project" open panel.
+/// Enables Xcode project/workspace bundles, `Package.swift`, and plain folders
+/// (so the user can navigate into and select a package directory) in the
+/// "Add Project" open panel.
 final class ProjectOpenPanelDelegate: NSObject, NSOpenSavePanelDelegate, @unchecked Sendable {
     static let shared = ProjectOpenPanelDelegate()
 
     func panel(_ sender: Any, shouldEnable url: URL) -> Bool {
         let ext = url.pathExtension.lowercased()
         if ext == "xcodeproj" || ext == "xcworkspace" { return true }
+        if url.lastPathComponent == "Package.swift" { return true }
         let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey])
         return (values?.isDirectory ?? false) && !(values?.isPackage ?? false)
     }
@@ -78,6 +80,7 @@ private struct GeneralSettingsTab: View {
 
     @State private var schemes: [String] = []
     @State private var detectingSchemes = false
+    @State private var detectingPlatform = false
     @State private var schemeError: String?
     @State private var helperInstalled = false
 
@@ -128,7 +131,7 @@ private struct GeneralSettingsTab: View {
                     Divider()
 
                     HStack(spacing: 8) {
-                        Text("Scheme").font(.subheadline.weight(.medium)).frame(width: 110, alignment: .leading)
+                        Text(project.isSwiftPackage ? "Product" : "Scheme").font(.subheadline.weight(.medium)).frame(width: 110, alignment: .leading)
                         if schemes.isEmpty && !detectingSchemes {
                             Text("No schemes detected").foregroundStyle(.secondary)
                         } else {
@@ -156,6 +159,19 @@ private struct GeneralSettingsTab: View {
                     }
 
                     HStack(spacing: 8) {
+                        Text("Platform").font(.subheadline.weight(.medium)).frame(width: 110, alignment: .leading)
+                        if detectingPlatform {
+                            ProgressView().controlSize(.small)
+                            Text("Detecting…").foregroundStyle(.secondary).font(.callout)
+                        } else {
+                            Label(platformLabel(project.platform), systemImage: project.isMac ? "macbook" : "iphone")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+
+                    HStack(spacing: 8) {
                         Text("Configuration").font(.subheadline.weight(.medium)).frame(width: 110, alignment: .leading)
                         Picker("", selection: configurationBinding) {
                             ForEach(BuildConfiguration.allCases) { config in
@@ -168,12 +184,27 @@ private struct GeneralSettingsTab: View {
                         Spacer()
                     }
 
+                    if project.isMac {
+                        HStack(spacing: 8) {
+                            Text("Export As").font(.subheadline.weight(.medium)).frame(width: 110, alignment: .leading)
+                            Picker("", selection: exportFormatBinding) {
+                                ForEach(ExportFormat.formats(for: .macOS)) { format in
+                                    Text(format.displayName).tag(format)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 220)
+                            Spacer()
+                        }
+                    }
+
                     HStack(spacing: 10) {
                         Button {
                             model.startBuild(for: project.id)
                             model.selection = .logs
                         } label: {
-                            Label("Build & Package IPA", systemImage: "play.fill")
+                            Label("Build & Package \(project.resolvedExportFormat.displayName)", systemImage: "play.fill")
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(project.selectedScheme == nil)
@@ -249,8 +280,28 @@ private struct GeneralSettingsTab: View {
     private var schemeBinding: Binding<String?> {
         Binding(
             get: { project?.selectedScheme },
-            set: { newValue in if let id = project?.id { projects.update(id) { $0.selectedScheme = newValue } } }
+            set: { newValue in
+                if let id = project?.id {
+                    projects.update(id) { $0.selectedScheme = newValue }
+                    Task { await detectPlatform() }
+                }
+            }
         )
+    }
+
+    private var exportFormatBinding: Binding<ExportFormat> {
+        Binding(
+            get: { project?.resolvedExportFormat ?? .ipa },
+            set: { newValue in if let id = project?.id { projects.update(id) { $0.exportFormat = newValue } } }
+        )
+    }
+
+    private func platformLabel(_ platform: ProjectPlatform) -> String {
+        switch platform {
+        case .iOS: return "iOS app"
+        case .macOS: return "macOS app"
+        case .unknown: return "Not detected yet"
+        }
     }
 
     private var configurationBinding: Binding<BuildConfiguration> {
@@ -266,17 +317,48 @@ private struct GeneralSettingsTab: View {
         schemeError = nil
         defer { detectingSchemes = false }
         do {
-            let detected = try await XcodeBuildService.schemes(for: project)
+            let detected: [String]
+            if project.isSwiftPackage {
+                detected = try await SwiftPackageService.executableProducts(atPackageDir: project.workingDirectory)
+            } else {
+                detected = try await XcodeBuildService.schemes(for: project)
+            }
             schemes = detected
             if detected.count == 1, project.selectedScheme == nil {
                 projects.update(project.id) { $0.selectedScheme = detected.first }
             }
             if detected.isEmpty {
-                schemeError = "No schemes found. Open the project in Xcode and let it resolve schemes."
+                schemeError = project.isSwiftPackage
+                    ? "No executable products found in Package.swift (libraries can't be packaged as an app)."
+                    : "No schemes found. Open the project in Xcode and let it resolve schemes."
             }
         } catch {
             schemeError = error.localizedDescription
             schemes = []
+        }
+        await detectPlatform()
+    }
+
+    /// Detects iOS vs macOS from the selected scheme and keeps the project's
+    /// destination consistent with it.
+    private func detectPlatform() async {
+        guard let id = project?.id, let current = projects.project(with: id),
+              current.selectedScheme != nil else { return }
+        // Packages are built for macOS by this app; no need to probe xcodebuild.
+        if current.isSwiftPackage {
+            projects.update(id) { $0.detectedPlatform = .macOS }
+            return
+        }
+        detectingPlatform = true
+        defer { detectingPlatform = false }
+        let platform = await XcodeBuildService.detectPlatform(for: current)
+        projects.update(id) { p in
+            p.detectedPlatform = platform
+            if platform == .macOS, !p.destination.isMac {
+                p.destination = .macOS
+            } else if platform == .iOS, p.destination.isMac {
+                p.destination = .genericIOS
+            }
         }
     }
 
@@ -287,16 +369,20 @@ private struct GeneralSettingsTab: View {
         // type that doesn't match them, graying everything out. Filter by
         // extension via the delegate instead.
         panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
+        panel.canChooseDirectories = true
         panel.canChooseFiles = true
         panel.treatsFilePackagesAsDirectories = false
         panel.delegate = ProjectOpenPanelDelegate.shared
-        panel.message = "Choose an .xcodeproj or .xcworkspace"
+        panel.message = "Choose an .xcodeproj, .xcworkspace, or a folder containing Package.swift"
         panel.prompt = "Add"
         if panel.runModal() == .OK, let url = panel.url {
-            let project = model.addProject(from: url)
-            model.selectedProjectId = project.id
-            schemes = []
+            if let project = model.addProject(from: url) {
+                model.selectedProjectId = project.id
+                schemes = []
+                schemeError = nil
+            } else {
+                schemeError = "No .xcodeproj, .xcworkspace, or Package.swift found there."
+            }
         }
     }
 
