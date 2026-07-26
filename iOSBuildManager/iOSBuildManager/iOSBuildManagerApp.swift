@@ -63,7 +63,7 @@ struct iOSBuildManagerApp: App {
         // A single identified Window (not a WindowGroup) so the menu bar item
         // can reopen it after the user closes it. Closing the window does not
         // quit the app — it keeps running for scheduled builds and the menu bar.
-        Window(model.settings.settings.appDisplayName, id: "main") {
+        Window("iOS Build Manager", id: "main") {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(model.settings)
@@ -108,12 +108,21 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.branding)
                 .environmentObject(model.github)
         } label: {
-            // A custom logo renders in colour at glyph size; without one this
-            // is a template symbol sized like a native status item, since the
-            // SwiftUI `systemImage` convenience renders too large and sits off
-            // the menu bar's vertical center.
-            Image(nsImage: model.branding.menuBarImage(fallbackSymbol: "shippingbox.fill"))
+            Image(nsImage: Self.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
     }
+
+    /// A template NSImage sized like a native status item glyph — the SwiftUI
+    /// `systemImage` convenience renders too large and sits off the menu bar's
+    /// vertical center.
+    private static let menuBarIcon: NSImage = {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+        let image = NSImage(
+            systemSymbolName: "shippingbox.fill",
+            accessibilityDescription: "iOS Build Manager"
+        )?.withSymbolConfiguration(configuration) ?? NSImage()
+        image.isTemplate = true
+        return image
+    }()
 }

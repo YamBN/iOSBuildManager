@@ -55,8 +55,9 @@ the app builds and packages exactly what Xcode signs.
 - **macOS apps and Swift packages too** — the platform is detected from the
   scheme; Mac builds export as a drag-to-Applications `.dmg` or a zipped `.app`,
   and a folder with a `Package.swift` builds with `swift build`
-- **Customization** — set your own app logo and name (scaled correctly for the
-  Dock, menu bar, and sidebar) plus per-project icons and display names
+- **Appearance** — give the app you're building its own icon and display name;
+  they're written into the `.app` on the next build (and it's re-signed), so
+  the app you install actually carries them
 - **GitHub built in** — sign in via the browser or the GitHub CLI, then commit
   and push, publish a repository, watch Actions, and cut a release with your
   build attached: **[docs/github-integration.md](docs/github-integration.md)**

@@ -237,10 +237,20 @@ final class BuildEngine: ObservableObject {
             } else {
                 appURL = try XcodeBuildService.locateApp(for: project)
             }
+            logLines.append("▸ Found app: \(appURL.path)")
+
+            // Bake the project's custom icon/name into the bundle before
+            // anything reads or packages it, so the installed app carries them.
+            let brandingLog = await BuildBrandingService.apply(
+                icon: project.customIconURL.flatMap { NSImage(contentsOf: $0) },
+                displayName: project.displayNameOverride,
+                to: appURL,
+                isMac: project.isMac
+            )
+            logLines.append(contentsOf: brandingLog)
+
             let info = try XcodeBuildService.readAppInfo(at: appURL)
             let appName = appURL.deletingPathExtension().lastPathComponent
-
-            logLines.append("▸ Found app: \(appURL.path)")
 
             // Verify the code signature before packaging so nobody discovers a
             // broken artifact at install time. Unsigned is only a warning; the

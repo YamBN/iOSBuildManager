@@ -41,15 +41,10 @@ final class AppModel: ObservableObject {
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        // The menu bar label is built from the branding store, so the scene has
-        // to re-evaluate when the logo changes.
+        // Views showing a project's icon read it through this store.
         branding.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-                Task { @MainActor in self?.applyDockIcon() }
-            }
+            .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
-        applyDockIcon()
 
         // Migrate LaunchAgents installed under old bundle identifiers; if one
         // existed and scheduling is still on, re-install it under the current
@@ -58,14 +53,6 @@ final class AppModel: ObservableObject {
             let hadLegacy = await SchedulerService.removeLegacyAgents()
             if hadLegacy { await self?.applySchedulerSettings() }
         }
-    }
-
-    // MARK: - Branding
-
-    /// Reflects the custom logo in the Dock. Assigning nil restores the icon
-    /// baked into the bundle.
-    func applyDockIcon() {
-        NSApp.applicationIconImage = branding.logo(size: 512)
     }
 
     // MARK: - Build

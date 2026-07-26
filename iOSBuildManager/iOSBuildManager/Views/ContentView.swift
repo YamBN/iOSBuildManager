@@ -26,6 +26,7 @@ struct ContentView: View {
         switch model.selection {
         case .dashboard: DashboardView()
         case .builds: BuildsView()
+        case .appearance: AppearanceView()
         case .github: GitHubView()
         case .profiles: ProfilesView()
         case .certificates: CertificatesView()

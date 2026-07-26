@@ -114,13 +114,13 @@ struct MenuBarMenu: View {
 
             divider
 
-            PanelRow(icon: "gearshape", title: "Open \(settings.settings.appDisplayName)", shortcut: nil) {
+            PanelRow(icon: "gearshape", title: "Open iOS Build Manager", shortcut: nil) {
                 activateAsRegularApp()
                 openWindow(id: "main")
                 closePanel()
             }
 
-            PanelRow(icon: "power", title: "Quit \(settings.settings.appDisplayName)", shortcut: nil) {
+            PanelRow(icon: "power", title: "Quit iOS Build Manager", shortcut: nil) {
                 NSApplication.shared.terminate(nil)
             }
         }

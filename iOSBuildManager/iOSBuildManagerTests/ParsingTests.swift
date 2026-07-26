@@ -283,13 +283,11 @@ final class BrandingNormalizationTests: XCTestCase {
         XCTAssertNil(BrandingStore.normalized(NSImage(size: .zero), size: 256))
     }
 
-    func testAppDisplayNameFallsBackWhenBlank() {
-        var settings = AppSettings()
-        XCTAssertEqual(settings.appDisplayName, "iOS Build Manager")
-        settings.customAppName = "   "
-        XCTAssertEqual(settings.appDisplayName, "iOS Build Manager")
-        settings.customAppName = "Build Buddy"
-        XCTAssertEqual(settings.appDisplayName, "Build Buddy")
+    func testRendersAtAnExactPixelSize() throws {
+        let data = try XCTUnwrap(BrandingStore.pngData(from: solidImage(width: 300, height: 300), pixelSize: 64))
+        let rep = try XCTUnwrap(NSBitmapImageRep(data: data))
+        XCTAssertEqual(rep.pixelsWide, 64)
+        XCTAssertEqual(rep.pixelsHigh, 64)
     }
 
     func testProjectDisplayNameUsesOverride() {
@@ -299,6 +297,80 @@ final class BrandingNormalizationTests: XCTestCase {
         XCTAssertEqual(project.displayName, "RawName")
         project.displayNameOverride = "Pretty Name"
         XCTAssertEqual(project.displayName, "Pretty Name")
+    }
+}
+
+final class BuildBrandingTests: XCTestCase {
+    private func makeBundle(isMac: Bool, iconNames: [String] = []) throws -> URL {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("brand-\(UUID().uuidString)", isDirectory: true)
+        let app = root.appendingPathComponent("Test.app", isDirectory: true)
+        let plistURL = BuildBrandingService.infoPlistURL(in: app, isMac: isMac)
+        try FileManager.default.createDirectory(at: plistURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let plist: [String: Any] = ["CFBundleName": "Original", "CFBundleIconName": "AppIcon"]
+        try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0).write(to: plistURL)
+
+        for name in iconNames {
+            let data = try XCTUnwrap(BrandingStore.pngData(from: NSImage(size: NSSize(width: 10, height: 10)), pixelSize: 60))
+            try data.write(to: app.appendingPathComponent(name))
+        }
+        return app
+    }
+
+    func testMacInfoPlistLivesUnderContents() {
+        let app = URL(fileURLWithPath: "/tmp/X.app")
+        XCTAssertEqual(BuildBrandingService.infoPlistURL(in: app, isMac: true).lastPathComponent, "Info.plist")
+        XCTAssertTrue(BuildBrandingService.infoPlistURL(in: app, isMac: true).path.contains("Contents"))
+        XCTAssertFalse(BuildBrandingService.infoPlistURL(in: app, isMac: false).path.contains("Contents"))
+    }
+
+    func testFindsOnlyAppIconPNGsInBundle() throws {
+        let app = try makeBundle(isMac: false, iconNames: ["AppIcon60x60@2x.png", "AppIcon76x76.png", "Launch.png"])
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+        let found = BuildBrandingService.iconFileURLs(in: app).map(\.lastPathComponent).sorted()
+        XCTAssertEqual(found, ["AppIcon60x60@2x.png", "AppIcon76x76.png"])
+    }
+
+    func testReplacesIOSIconsKeepingTheirPixelSize() throws {
+        let app = try makeBundle(isMac: false, iconNames: ["AppIcon60x60@2x.png"])
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+
+        let source = NSImage(size: NSSize(width: 400, height: 200))
+        let replaced = try BuildBrandingService.applyIOSIcons(source, in: app)
+        XCTAssertEqual(replaced, 1)
+        // The file keeps the dimensions the bundle expected (60pt @2x = 120px…
+        // here the fixture wrote 60px, so it must still be 60px).
+        XCTAssertEqual(BuildBrandingService.pixelSize(of: app.appendingPathComponent("AppIcon60x60@2x.png")), 60)
+    }
+
+    func testICNSSlotsCoverEverySizeMacNeeds() {
+        let sizes = Set(BuildBrandingService.icnsSlots.map(\.size))
+        XCTAssertEqual(sizes, [16, 32, 64, 128, 256, 512, 1024])
+        XCTAssertEqual(BuildBrandingService.icnsSlots.count, 10)
+    }
+
+    func testPlistRoundTrip() throws {
+        let app = try makeBundle(isMac: true)
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+        let url = BuildBrandingService.infoPlistURL(in: app, isMac: true)
+
+        var plist = try XCTUnwrap(BuildBrandingService.readPlist(at: url))
+        plist["CFBundleDisplayName"] = "Renamed"
+        // CFBundleIconName wins over CFBundleIconFile on macOS, so applying a
+        // custom icon must clear it.
+        plist.removeValue(forKey: "CFBundleIconName")
+        XCTAssertTrue(BuildBrandingService.writePlist(plist, to: url))
+
+        let reread = try XCTUnwrap(BuildBrandingService.readPlist(at: url))
+        XCTAssertEqual(reread["CFBundleDisplayName"] as? String, "Renamed")
+        XCTAssertNil(reread["CFBundleIconName"])
+    }
+
+    func testNoOpWhenNothingIsCustomized() async throws {
+        let app = try makeBundle(isMac: true)
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+        let log = await BuildBrandingService.apply(icon: nil, displayName: "   ", to: app, isMac: true)
+        XCTAssertTrue(log.isEmpty)
     }
 }
 

@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.5.1"
-    static let buildNumber: String = "8"
+    static let version: String = "1.6.0"
+    static let buildNumber: String = "9"
 
     // MARK: - Credits
 
@@ -37,7 +37,7 @@ enum AppVersion {
         "Xcode Run Script helper — package after every Xcode build, no build loops",
         "Menu bar panel with build actions, live build progress, a device-picker submenu, recent builds, and project switcher",
         "Checks GitHub for new releases on launch (optional, no telemetry)",
-        "Customization: your own app logo and name, plus per-project icons and display names",
+        "Appearance — give the app you're building its own icon and name, written into the bundle on the next build",
         "GitHub built in: sign in, commit and push, publish repositories, watch Actions, cut releases",
         "Dark / Light / System themes; local-only, no analytics",
     ]
@@ -74,6 +74,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.6.0", date: "2026-07-26", type: .minor,
+              summary: "Appearance is now its own section and belongs to the project, not to this app: the icon and name you set there are written into the .app on the next build, so the app you install really carries them. Removed the duplicate app-logo/app-name controls and the second theme picker, and dropped the redundant app title above the sidebar."),
         .init(version: "1.5.1", date: "2026-07-26", type: .patch,
               summary: "Ships the 1.5.0 features as a downloadable build — 1.5.0 itself failed to compile on the release runner because of a strict-concurrency error in the logo drop handler."),
         .init(version: "1.5.0", date: "2026-07-26", type: .minor,
