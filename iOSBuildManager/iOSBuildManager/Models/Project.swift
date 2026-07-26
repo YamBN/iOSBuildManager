@@ -33,10 +33,27 @@ struct Project: Codable, Identifiable, Hashable, Sendable {
     var detectedPlatform: ProjectPlatform?
     /// User-chosen export format; nil means "use the platform default".
     var exportFormat: ExportFormat?
+    /// Replaces the project name in the UI when non-empty.
+    var displayNameOverride: String?
+    /// Set once the user picks a custom icon; the file lives at
+    /// `AppPaths.projectIcon(for:)`.
+    var hasCustomIcon: Bool?
 
     var fileURL: URL { URL(fileURLWithPath: path) }
 
-    var displayName: String { name }
+    /// The name to show: the user's override when set, otherwise the project's
+    /// own name.
+    var displayName: String {
+        let trimmed = (displayNameOverride ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? name : trimmed
+    }
+
+    /// A user-supplied icon that wins over the icon extracted from builds.
+    var customIconURL: URL? {
+        guard hasCustomIcon == true else { return nil }
+        let url = AppPaths.projectIcon(for: id)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
 
     /// The build tooling this project uses. Falls back to the legacy
     /// `isWorkspace` flag for projects saved before packages were supported.

@@ -114,13 +114,13 @@ struct MenuBarMenu: View {
 
             divider
 
-            PanelRow(icon: "gearshape", title: "Open iOS Build Manager", shortcut: nil) {
+            PanelRow(icon: "gearshape", title: "Open \(settings.settings.appDisplayName)", shortcut: nil) {
                 activateAsRegularApp()
                 openWindow(id: "main")
                 closePanel()
             }
 
-            PanelRow(icon: "power", title: "Quit iOS Build Manager", shortcut: nil) {
+            PanelRow(icon: "power", title: "Quit \(settings.settings.appDisplayName)", shortcut: nil) {
                 NSApplication.shared.terminate(nil)
             }
         }
@@ -247,7 +247,7 @@ struct MenuBarMenu: View {
 
     private var projectRow: some View {
         HStack(spacing: 10) {
-            ProjectIconBadge(appPath: currentProjectAppPath, size: 40)
+            ProjectIconBadge(appPath: currentProjectAppPath, customIconURL: project?.customIconURL, size: 40)
 
             VStack(alignment: .leading, spacing: 3) {
                 if projects.projects.count > 1 {
@@ -256,14 +256,14 @@ struct MenuBarMenu: View {
                             Button(p.name) { model.selectedProjectId = p.id }
                         }
                     } label: {
-                        Text(project?.name ?? "No Project")
+                        Text(project?.displayName ?? "No Project")
                             .font(.headline)
                     }
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
                     .fixedSize()
                 } else {
-                    Text(project?.name ?? "No Project")
+                    Text(project?.displayName ?? "No Project")
                         .font(.headline)
                 }
 

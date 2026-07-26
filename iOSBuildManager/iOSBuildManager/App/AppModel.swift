@@ -17,6 +17,8 @@ final class AppModel: ObservableObject {
     let engine: BuildEngine
     let profiles: ProvisioningProfileStore
     let certificates: CertificateStore
+    let branding: BrandingStore
+    let github: GitHubStore
 
     private var cancellables: Set<AnyCancellable> = []
 
@@ -29,6 +31,8 @@ final class AppModel: ObservableObject {
         self.engine = BuildEngine()
         self.profiles = ProvisioningProfileStore()
         self.certificates = CertificateStore()
+        self.branding = BrandingStore()
+        self.github = GitHubStore()
 
         // Scene-level modifiers (preferredColorScheme, MenuBarExtra insertion)
         // read nested settings through `model`, so forward the store's change
@@ -37,6 +41,16 @@ final class AppModel: ObservableObject {
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
+        // The menu bar label is built from the branding store, so the scene has
+        // to re-evaluate when the logo changes.
+        branding.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+                Task { @MainActor in self?.applyDockIcon() }
+            }
+            .store(in: &cancellables)
+        applyDockIcon()
+
         // Migrate LaunchAgents installed under old bundle identifiers; if one
         // existed and scheduling is still on, re-install it under the current
         // identifier so scheduled builds keep working after the rename.
@@ -44,6 +58,14 @@ final class AppModel: ObservableObject {
             let hadLegacy = await SchedulerService.removeLegacyAgents()
             if hadLegacy { await self?.applySchedulerSettings() }
         }
+    }
+
+    // MARK: - Branding
+
+    /// Reflects the custom logo in the Dock. Assigning nil restores the icon
+    /// baked into the bundle.
+    func applyDockIcon() {
+        NSApp.applicationIconImage = branding.logo(size: 512)
     }
 
     // MARK: - Build
@@ -130,6 +152,7 @@ final class AppModel: ObservableObject {
             // We build packages for macOS and default to a DMG.
             project.detectedPlatform = .macOS
             project.exportFormat = .dmg
+            project.destination = .macOS
         }
         projects.upsert(project)
         selectedProjectId = project.id

@@ -18,6 +18,14 @@ enum AppPaths {
     static var derivedDataURL: URL { supportURL.appendingPathComponent("DerivedData", isDirectory: true) }
     static var logsURL: URL { supportURL.appendingPathComponent("Logs", isDirectory: true) }
     static var helperScriptURL: URL { supportURL.appendingPathComponent("package-ipa.sh") }
+    /// Normalized custom app logo (see `BrandingStore`).
+    static var customLogoURL: URL { supportURL.appendingPathComponent("custom-logo.png") }
+    /// Per-project custom icons, keyed by project id.
+    static var projectIconsURL: URL { supportURL.appendingPathComponent("ProjectIcons", isDirectory: true) }
+
+    static func projectIcon(for projectId: UUID) -> URL {
+        projectIconsURL.appendingPathComponent("\(projectId.uuidString).png")
+    }
     static var scheduledBuildScriptURL: URL { supportURL.appendingPathComponent("scheduled-build.sh") }
 
     static var launchAgentURL: URL {
@@ -37,7 +45,7 @@ enum AppPaths {
     /// Ensures the Application Support tree exists.
     static func ensureDirectories() {
         let fm = FileManager.default
-        for url in [supportURL, logsURL, derivedDataURL] {
+        for url in [supportURL, logsURL, derivedDataURL, projectIconsURL] {
             try? fm.createDirectory(at: url, withIntermediateDirectories: true)
         }
     }

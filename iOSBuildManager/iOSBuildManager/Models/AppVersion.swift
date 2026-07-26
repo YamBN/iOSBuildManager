@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.4.0"
-    static let buildNumber: String = "6"
+    static let version: String = "1.5.0"
+    static let buildNumber: String = "7"
 
     // MARK: - Credits
 
@@ -37,6 +37,8 @@ enum AppVersion {
         "Xcode Run Script helper — package after every Xcode build, no build loops",
         "Menu bar panel with build actions, live build progress, a device-picker submenu, recent builds, and project switcher",
         "Checks GitHub for new releases on launch (optional, no telemetry)",
+        "Customization: your own app logo and name, plus per-project icons and display names",
+        "GitHub built in: sign in, commit and push, publish repositories, watch Actions, cut releases",
         "Dark / Light / System themes; local-only, no analytics",
     ]
 
@@ -72,6 +74,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.5.0", date: "2026-07-13", type: .minor,
+              summary: "New Appearance tab for making the app yours: a custom logo (scaled correctly for the Dock, menu bar, and sidebar), a custom app name, theme, and per-project icons and display names. New GitHub section: sign in through the browser or the GitHub CLI, commit and push, publish a repository, watch Actions, and cut a release with your build attached. Also fixes macOS builds failing to read Info.plist."),
         .init(version: "1.4.0", date: "2026-07-12", type: .minor,
               summary: "Build macOS apps and Swift packages, not just iOS: platform is auto-detected from the scheme, packages build with swift build and are wrapped into an app, and you can export a .dmg or zipped .app. The project's real app icon now appears in the panel and dashboard, and the progress bar shows a percentage from the very first build."),
         .init(version: "1.3.1", date: "2026-07-09", type: .patch,

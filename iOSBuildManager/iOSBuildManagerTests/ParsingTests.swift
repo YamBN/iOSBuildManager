@@ -250,6 +250,188 @@ final class ExportFormatTests: XCTestCase {
     }
 }
 
+final class BrandingNormalizationTests: XCTestCase {
+    private func solidImage(width: CGFloat, height: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.lockFocus()
+        NSColor.red.setFill()
+        NSRect(x: 0, y: 0, width: width, height: height).fill()
+        image.unlockFocus()
+        return image
+    }
+
+    func testWideImageIsNormalizedToSquare() throws {
+        let normalized = try XCTUnwrap(BrandingStore.normalized(solidImage(width: 400, height: 100), size: 256))
+        XCTAssertEqual(normalized.size.width, 256)
+        XCTAssertEqual(normalized.size.height, 256)
+    }
+
+    func testTallImageIsNormalizedToSquare() throws {
+        let normalized = try XCTUnwrap(BrandingStore.normalized(solidImage(width: 60, height: 500), size: 256))
+        XCTAssertEqual(normalized.size.width, 256)
+        XCTAssertEqual(normalized.size.height, 256)
+    }
+
+    func testProducesPNGData() throws {
+        let data = try XCTUnwrap(BrandingStore.normalizedPNGData(from: solidImage(width: 120, height: 80), size: 128))
+        XCTAssertFalse(data.isEmpty)
+        // PNG magic number.
+        XCTAssertEqual(Array(data.prefix(4)), [0x89, 0x50, 0x4E, 0x47])
+    }
+
+    func testZeroSizedImageIsRejected() {
+        XCTAssertNil(BrandingStore.normalized(NSImage(size: .zero), size: 256))
+    }
+
+    func testAppDisplayNameFallsBackWhenBlank() {
+        var settings = AppSettings()
+        XCTAssertEqual(settings.appDisplayName, "iOS Build Manager")
+        settings.customAppName = "   "
+        XCTAssertEqual(settings.appDisplayName, "iOS Build Manager")
+        settings.customAppName = "Build Buddy"
+        XCTAssertEqual(settings.appDisplayName, "Build Buddy")
+    }
+
+    func testProjectDisplayNameUsesOverride() {
+        var project = Project(name: "RawName", path: "/tmp/X.xcodeproj", isWorkspace: false)
+        XCTAssertEqual(project.displayName, "RawName")
+        project.displayNameOverride = "  "
+        XCTAssertEqual(project.displayName, "RawName")
+        project.displayNameOverride = "Pretty Name"
+        XCTAssertEqual(project.displayName, "Pretty Name")
+    }
+}
+
+final class GitHubAuthParsingTests: XCTestCase {
+    func testParsesDeviceCodeResponse() throws {
+        let json = """
+        {"device_code":"abc123","user_code":"WXYZ-1234",
+         "verification_uri":"https://github.com/login/device","expires_in":899,"interval":5}
+        """
+        let grant = try XCTUnwrap(GitHubAuthService.parseDeviceCode(Data(json.utf8)))
+        XCTAssertEqual(grant.deviceCode, "abc123")
+        XCTAssertEqual(grant.userCode, "WXYZ-1234")
+        XCTAssertEqual(grant.interval, 5)
+    }
+
+    func testRejectsMalformedDeviceCodeResponse() {
+        XCTAssertNil(GitHubAuthService.parseDeviceCode(Data(#"{"error":"bad_verification_code"}"#.utf8)))
+    }
+
+    func testPollStates() {
+        XCTAssertEqual(GitHubAuthService.parsePoll(Data(#"{"access_token":"tok"}"#.utf8)), .token("tok"))
+        XCTAssertEqual(GitHubAuthService.parsePoll(Data(#"{"error":"authorization_pending"}"#.utf8)), .pending)
+        XCTAssertEqual(GitHubAuthService.parsePoll(Data(#"{"error":"slow_down"}"#.utf8)), .slowDown)
+        XCTAssertEqual(GitHubAuthService.parsePoll(Data(#"{"error":"access_denied"}"#.utf8)), .denied)
+        XCTAssertEqual(GitHubAuthService.parsePoll(Data(#"{"error":"expired_token"}"#.utf8)), .expired)
+    }
+
+    func testPollUnknownErrorSurfacesDescription() {
+        let result = GitHubAuthService.parsePoll(Data(#"{"error":"nope","error_description":"Something broke"}"#.utf8))
+        XCTAssertEqual(result, .failed("Something broke"))
+    }
+}
+
+final class GitParsingTests: XCTestCase {
+    func testParsesPorcelainStatus() {
+        let lines = [" M Sources/App.swift", "?? New File.swift", "A  Added.swift", ""]
+        XCTAssertEqual(GitService.parseChangedFiles(lines),
+                       ["Sources/App.swift", "New File.swift", "Added.swift"])
+    }
+
+    func testRepoFullNameFromHTTPSRemote() {
+        XCTAssertEqual(GitService.repoFullName(fromRemote: "https://github.com/YamBN/iOSBuildManager.git"),
+                       "YamBN/iOSBuildManager")
+    }
+
+    func testRepoFullNameFromSSHRemote() {
+        XCTAssertEqual(GitService.repoFullName(fromRemote: "git@github.com:YamBN/iOSBuildManager.git"),
+                       "YamBN/iOSBuildManager")
+    }
+
+    func testRepoFullNameIgnoresNonGitHubRemote() {
+        XCTAssertNil(GitService.repoFullName(fromRemote: "https://gitlab.com/foo/bar.git"))
+    }
+
+    func testAuthenticatedRemoteIsNeverStoredAsOrigin() {
+        // The public remote must not carry the token.
+        XCTAssertEqual(GitService.publicRemote(repoFullName: "o/r"), "https://github.com/o/r.git")
+        XCTAssertFalse(GitService.publicRemote(repoFullName: "o/r").contains("x-access-token"))
+        XCTAssertTrue(GitService.authenticatedRemote(repoFullName: "o/r", token: "secret").contains("secret"))
+    }
+
+    func testRedactionRemovesSecrets() {
+        let text = "fatal: repo https://x-access-token:ghp_SECRET@github.com/o/r.git not found"
+        let redacted = GitService.redact(text, secrets: ["ghp_SECRET"])
+        XCTAssertFalse(redacted.contains("ghp_SECRET"))
+        XCTAssertTrue(redacted.contains("***"))
+    }
+}
+
+final class GitHubAPIParsingTests: XCTestCase {
+    func testParsesRepositories() {
+        let json = """
+        [{"id":1,"full_name":"o/r","html_url":"https://github.com/o/r","private":true,"default_branch":"main"}]
+        """
+        let repos = GitHubService.parseRepos(Data(json.utf8))
+        XCTAssertEqual(repos.count, 1)
+        XCTAssertEqual(repos.first?.fullName, "o/r")
+        XCTAssertTrue(repos.first?.isPrivate ?? false)
+    }
+
+    func testParsesWorkflowRuns() {
+        let json = """
+        {"workflow_runs":[
+          {"id":7,"name":"CI","status":"completed","conclusion":"success","head_branch":"main",
+           "html_url":"https://github.com/o/r/actions/runs/7","created_at":"2026-07-12T10:00:00Z"}
+        ]}
+        """
+        let runs = GitHubService.parseWorkflowRuns(Data(json.utf8))
+        XCTAssertEqual(runs.count, 1)
+        XCTAssertEqual(runs.first?.displayState, "success")
+        XCTAssertEqual(runs.first?.systemImage, "checkmark.circle.fill")
+    }
+
+    func testRunStillGoingUsesStatusAsDisplayState() {
+        let json = #"{"workflow_runs":[{"id":8,"name":"CI","status":"in_progress","head_branch":"main"}]}"#
+        let runs = GitHubService.parseWorkflowRuns(Data(json.utf8))
+        XCTAssertEqual(runs.first?.displayState, "in_progress")
+    }
+}
+
+final class AppInfoReadTests: XCTestCase {
+    private func makeApp(plistAt relativePath: String) throws -> URL {
+        let app = FileManager.default.temporaryDirectory
+            .appendingPathComponent("fixture-\(UUID().uuidString)/Test.app", isDirectory: true)
+        let plistURL = app.appendingPathComponent(relativePath)
+        try FileManager.default.createDirectory(at: plistURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let plist: [String: Any] = ["CFBundleShortVersionString": "2.5", "CFBundleVersion": "7"]
+        try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0).write(to: plistURL)
+        return app
+    }
+
+    func testReadsRootInfoPlist_iOSLayout() throws {
+        let app = try makeApp(plistAt: "Info.plist")
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+        let info = try XcodeBuildService.readAppInfo(at: app)
+        XCTAssertEqual(info.version, "2.5")
+        XCTAssertEqual(info.buildNumber, "7")
+    }
+
+    func testReadsContentsInfoPlist_macLayout() throws {
+        let app = try makeApp(plistAt: "Contents/Info.plist")
+        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
+        let info = try XcodeBuildService.readAppInfo(at: app)
+        XCTAssertEqual(info.version, "2.5")
+        XCTAssertEqual(info.buildNumber, "7")
+    }
+
+    func testThrowsWhenNoPlistAnywhere() {
+        let app = FileManager.default.temporaryDirectory.appendingPathComponent("nope-\(UUID().uuidString)/X.app")
+        XCTAssertThrowsError(try XcodeBuildService.readAppInfo(at: app))
+    }
+}
+
 final class SwiftPackageTests: XCTestCase {
     func testParsesExecutableProductsOnly() {
         let json = """

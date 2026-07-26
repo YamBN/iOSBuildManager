@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Top-level sidebar destinations.
 enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
-    case dashboard, builds, profiles, certificates, devices, settings, logs
+    case dashboard, builds, github, profiles, certificates, devices, settings, logs
 
     var id: String { rawValue }
 
@@ -11,6 +11,7 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .dashboard: return "Dashboard"
         case .builds: return "Builds"
+        case .github: return "GitHub"
         case .profiles: return "Profiles"
         case .certificates: return "Certificates"
         case .devices: return "Devices"
@@ -23,6 +24,7 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .dashboard: return "cube"
         case .builds: return "shippingbox"
+        case .github: return "chevron.left.forwardslash.chevron.right"
         case .profiles: return "doc.badge.gearshape"
         case .certificates: return "checkmark.seal"
         case .devices: return "iphone"

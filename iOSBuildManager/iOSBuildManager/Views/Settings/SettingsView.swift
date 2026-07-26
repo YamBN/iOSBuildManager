@@ -19,6 +19,7 @@ final class ProjectOpenPanelDelegate: NSObject, NSOpenSavePanelDelegate, @unchec
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general = "General"
+    case appearance = "Appearance"
     case build = "Build"
     case signing = "Signing"
     case distribution = "Distribution"
@@ -41,6 +42,7 @@ struct SettingsView: View {
 
                 switch tab {
                 case .general: GeneralSettingsTab()
+                case .appearance: AppearanceSettingsTab()
                 case .build: BuildSettingsTab()
                 case .signing: SigningSettingsTab()
                 case .distribution: DistributionSettingsTab()
@@ -346,7 +348,10 @@ private struct GeneralSettingsTab: View {
               current.selectedScheme != nil else { return }
         // Packages are built for macOS by this app; no need to probe xcodebuild.
         if current.isSwiftPackage {
-            projects.update(id) { $0.detectedPlatform = .macOS }
+            projects.update(id) {
+                $0.detectedPlatform = .macOS
+                if !$0.destination.isMac { $0.destination = .macOS }
+            }
             return
         }
         detectingPlatform = true

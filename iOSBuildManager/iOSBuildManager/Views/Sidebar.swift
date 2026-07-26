@@ -7,9 +7,13 @@ struct Sidebar: View {
     @Binding var selection: SidebarSection
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var projects: ProjectStore
+    @EnvironmentObject private var settings: SettingsStore
+    @EnvironmentObject private var branding: BrandingStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            brandingHeader
+
             VStack(spacing: 4) {
                 ForEach(SidebarSection.allCases) { section in
                     SidebarItem(
@@ -21,7 +25,7 @@ struct Sidebar: View {
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.top, 10)
+            .padding(.top, 6)
 
             Spacer(minLength: 0)
 
@@ -29,6 +33,32 @@ struct Sidebar: View {
                 .padding(10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// The app's own logo and name, reflecting whatever the user set in
+    /// Settings → Appearance.
+    private var brandingHeader: some View {
+        HStack(spacing: 9) {
+            if let logo = branding.logo(size: 22) {
+                Image(nsImage: logo)
+                    .resizable()
+                    .frame(width: 22, height: 22)
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            } else {
+                Image(systemName: "shippingbox.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 22, height: 22)
+            }
+            Text(settings.settings.appDisplayName)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 34)
+        .padding(.bottom, 6)
     }
 
     @ViewBuilder
@@ -39,7 +69,7 @@ struct Sidebar: View {
             } label: {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text(project.name)
+                        Text(project.displayName)
                             .font(.headline)
                             .lineLimit(1)
                         Spacer()
@@ -50,7 +80,7 @@ struct Sidebar: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    Text("iOS App")
+                    Text(project.isMac ? "macOS App" : "iOS App")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)

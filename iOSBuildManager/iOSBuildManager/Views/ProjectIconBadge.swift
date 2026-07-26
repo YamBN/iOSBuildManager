@@ -7,6 +7,8 @@ import SwiftUI
 struct ProjectIconBadge: View {
     /// Path to the project's most recent built `.app`, if any.
     let appPath: String?
+    /// A user-chosen icon for the project, which wins over the built app's icon.
+    var customIconURL: URL?
     var size: CGFloat = 44
 
     @State private var icon: NSImage?
@@ -26,11 +28,19 @@ struct ProjectIconBadge: View {
                     .frame(width: size, height: size)
             }
         }
-        .task(id: appPath) { await loadIcon() }
+        .task(id: reloadKey) { await loadIcon() }
+    }
+
+    private var reloadKey: String {
+        "\(customIconURL?.path ?? "")|\(appPath ?? "")"
     }
 
     @MainActor
     private func loadIcon() async {
+        if let customIconURL, let custom = NSImage(contentsOf: customIconURL) {
+            icon = custom
+            return
+        }
         guard let appPath, FileManager.default.fileExists(atPath: appPath) else {
             icon = nil
             return

@@ -63,7 +63,7 @@ struct iOSBuildManagerApp: App {
         // A single identified Window (not a WindowGroup) so the menu bar item
         // can reopen it after the user closes it. Closing the window does not
         // quit the app — it keeps running for scheduled builds and the menu bar.
-        Window("iOS Build Manager", id: "main") {
+        Window(model.settings.settings.appDisplayName, id: "main") {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(model.settings)
@@ -73,6 +73,8 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.engine)
                 .environmentObject(model.profiles)
                 .environmentObject(model.certificates)
+                .environmentObject(model.branding)
+                .environmentObject(model.github)
                 .preferredColorScheme(model.settings.settings.theme.colorScheme)
                 .frame(minWidth: 1040, minHeight: 660)
         }
@@ -103,22 +105,15 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.history)
                 .environmentObject(model.devices)
                 .environmentObject(model.engine)
+                .environmentObject(model.branding)
+                .environmentObject(model.github)
         } label: {
-            Image(nsImage: Self.menuBarIcon)
+            // A custom logo renders in colour at glyph size; without one this
+            // is a template symbol sized like a native status item, since the
+            // SwiftUI `systemImage` convenience renders too large and sits off
+            // the menu bar's vertical center.
+            Image(nsImage: model.branding.menuBarImage(fallbackSymbol: "shippingbox.fill"))
         }
         .menuBarExtraStyle(.window)
     }
-
-    /// A template NSImage sized like a native status item glyph — the SwiftUI
-    /// `systemImage` convenience renders too large and sits off the menu bar's
-    /// vertical center.
-    private static let menuBarIcon: NSImage = {
-        let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
-        let image = NSImage(
-            systemSymbolName: "shippingbox.fill",
-            accessibilityDescription: "iOS Build Manager"
-        )?.withSymbolConfiguration(configuration) ?? NSImage()
-        image.isTemplate = true
-        return image
-    }()
 }

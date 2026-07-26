@@ -52,6 +52,14 @@ the app builds and packages exactly what Xcode signs.
   when an IPA won't be directly installable
 - **Xcode Run Script helper** — package automatically after every Xcode build,
   with no build loops
+- **macOS apps and Swift packages too** — the platform is detected from the
+  scheme; Mac builds export as a drag-to-Applications `.dmg` or a zipped `.app`,
+  and a folder with a `Package.swift` builds with `swift build`
+- **Customization** — set your own app logo and name (scaled correctly for the
+  Dock, menu bar, and sidebar) plus per-project icons and display names
+- **GitHub built in** — sign in via the browser or the GitHub CLI, then commit
+  and push, publish a repository, watch Actions, and cut a release with your
+  build attached: **[docs/github-integration.md](docs/github-integration.md)**
 - **Dark / Light / System** themes
 
 ## Requirements

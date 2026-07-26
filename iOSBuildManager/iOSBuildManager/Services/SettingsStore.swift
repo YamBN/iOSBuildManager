@@ -78,8 +78,19 @@ struct AppSettings: Codable, Sendable, Hashable {
     var scheduleWeekdays: [Int] = [1, 4] // Mon, Thu (launchd 0=Sun…6=Sat)
     var checkForUpdatesAutomatically: Bool = true
     var skippedUpdateVersion: String? = nil // user tapped "Skip This Version"
+    /// Overrides the app's display name throughout the UI when non-empty.
+    var customAppName: String = ""
+    /// OAuth App client ID used for GitHub's device flow. Public by design —
+    /// device flow needs no client secret — but each install registers its own.
+    var githubClientID: String = ""
 
     init() {}
+
+    /// The name shown in the sidebar, window, and menu bar panel.
+    var appDisplayName: String {
+        let trimmed = customAppName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "iOS Build Manager" : trimmed
+    }
 
     /// Tolerant decoding: fields added in newer versions fall back to their
     /// defaults instead of failing the whole file and silently resetting
@@ -104,6 +115,8 @@ struct AppSettings: Codable, Sendable, Hashable {
         scheduleWeekdays = try c.decodeIfPresent([Int].self, forKey: .scheduleWeekdays) ?? defaults.scheduleWeekdays
         checkForUpdatesAutomatically = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdatesAutomatically) ?? defaults.checkForUpdatesAutomatically
         skippedUpdateVersion = try c.decodeIfPresent(String.self, forKey: .skippedUpdateVersion) ?? defaults.skippedUpdateVersion
+        customAppName = try c.decodeIfPresent(String.self, forKey: .customAppName) ?? defaults.customAppName
+        githubClientID = try c.decodeIfPresent(String.self, forKey: .githubClientID) ?? defaults.githubClientID
     }
 }
 

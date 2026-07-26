@@ -148,10 +148,15 @@ enum XcodeBuildService {
         return nil
     }
 
-    /// Reads `CFBundleShortVersionString` and `CFBundleVersion` from a built app.
+    /// Reads `CFBundleShortVersionString` and `CFBundleVersion` from a built
+    /// app. iOS bundles keep Info.plist at the bundle root; macOS bundles keep
+    /// it under `Contents/`, so both locations are tried.
     static func readAppInfo(at appURL: URL) throws -> (version: String, buildNumber: String) {
-        let plistURL = appURL.appendingPathComponent("Info.plist")
-        guard let data = try? Data(contentsOf: plistURL),
+        let candidates = [
+            appURL.appendingPathComponent("Info.plist"),
+            appURL.appendingPathComponent("Contents/Info.plist"),
+        ]
+        guard let data = candidates.lazy.compactMap({ try? Data(contentsOf: $0) }).first,
               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any]
         else { throw BuildError.appInfoReadFailed }
         let version = (plist["CFBundleShortVersionString"] as? String) ?? "0.0.0"
