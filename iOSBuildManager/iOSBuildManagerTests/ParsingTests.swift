@@ -369,7 +369,7 @@ final class BuildBrandingTests: XCTestCase {
     func testNoOpWhenNothingIsCustomized() async throws {
         let app = try makeBundle(isMac: true)
         defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
-        let log = await BuildBrandingService.apply(icon: nil, displayName: "   ", to: app, isMac: true)
+        let log = await BuildBrandingService.apply(iconURL: nil, displayName: "   ", to: app, isMac: true)
         XCTAssertTrue(log.isEmpty)
     }
 }

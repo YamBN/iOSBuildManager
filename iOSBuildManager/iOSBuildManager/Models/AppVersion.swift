@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.6.0"
-    static let buildNumber: String = "9"
+    static let version: String = "1.6.1"
+    static let buildNumber: String = "10"
 
     // MARK: - Credits
 
@@ -74,6 +74,8 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
+        .init(version: "1.6.1", date: "2026-07-26", type: .patch,
+              summary: "Ships the 1.6.0 Appearance rework as a downloadable build — 1.6.0 failed to compile on the release runner because the custom icon was passed across an actor boundary as a non-Sendable image."),
         .init(version: "1.6.0", date: "2026-07-26", type: .minor,
               summary: "Appearance is now its own section and belongs to the project, not to this app: the icon and name you set there are written into the .app on the next build, so the app you install really carries them. Removed the duplicate app-logo/app-name controls and the second theme picker, and dropped the redundant app title above the sidebar."),
         .init(version: "1.5.1", date: "2026-07-26", type: .patch,

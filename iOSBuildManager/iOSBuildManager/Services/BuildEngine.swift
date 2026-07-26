@@ -242,7 +242,7 @@ final class BuildEngine: ObservableObject {
             // Bake the project's custom icon/name into the bundle before
             // anything reads or packages it, so the installed app carries them.
             let brandingLog = await BuildBrandingService.apply(
-                icon: project.customIconURL.flatMap { NSImage(contentsOf: $0) },
+                iconURL: project.customIconURL,
                 displayName: project.displayNameOverride,
                 to: appURL,
                 isMac: project.isMac

@@ -19,13 +19,17 @@ enum BuildBrandingService {
 
     /// Applies branding, returning log lines describing what changed.
     /// Does nothing (and returns no lines) when the project has no overrides.
+    ///
+    /// Takes the icon as a URL rather than an image because `NSImage` isn't
+    /// `Sendable`; it's loaded here, off the caller's actor.
     static func apply(
-        icon: NSImage?,
+        iconURL: URL?,
         displayName: String?,
         to appURL: URL,
         isMac: Bool
     ) async -> [String] {
         let name = (displayName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let icon = iconURL.flatMap { NSImage(contentsOf: $0) }
         guard icon != nil || !name.isEmpty else { return [] }
 
         var log: [String] = []
