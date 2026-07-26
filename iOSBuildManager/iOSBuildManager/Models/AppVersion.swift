@@ -6,8 +6,8 @@ import Foundation
 /// (semver) and prepends a changelog entry. The About screen shows the full
 /// feature list and the latest changelog entries.
 enum AppVersion {
-    static let version: String = "1.5.0"
-    static let buildNumber: String = "7"
+    static let version: String = "1.5.1"
+    static let buildNumber: String = "8"
 
     // MARK: - Credits
 
@@ -74,7 +74,9 @@ enum AppVersion {
 
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
-        .init(version: "1.5.0", date: "2026-07-13", type: .minor,
+        .init(version: "1.5.1", date: "2026-07-26", type: .patch,
+              summary: "Ships the 1.5.0 features as a downloadable build — 1.5.0 itself failed to compile on the release runner because of a strict-concurrency error in the logo drop handler."),
+        .init(version: "1.5.0", date: "2026-07-26", type: .minor,
               summary: "New Appearance tab for making the app yours: a custom logo (scaled correctly for the Dock, menu bar, and sidebar), a custom app name, theme, and per-project icons and display names. New GitHub section: sign in through the browser or the GitHub CLI, commit and push, publish a repository, watch Actions, and cut a release with your build attached. Also fixes macOS builds failing to read Info.plist."),
         .init(version: "1.4.0", date: "2026-07-12", type: .minor,
               summary: "Build macOS apps and Swift packages, not just iOS: platform is auto-detected from the scheme, packages build with swift build and are wrapped into an app, and you can export a .dmg or zipped .app. The project's real app icon now appears in the panel and dashboard, and the progress bar shows a percentage from the very first build."),
