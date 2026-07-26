@@ -95,7 +95,7 @@ struct AppearanceSettingsTab: View {
         .frame(width: 104, height: 104)
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             loadDroppedImage(providers) { url in
-                branding.importLogo(from: url)
+                _ = branding.importLogo(from: url)
             }
         }
         .onTapGesture { chooseLogo() }
@@ -209,10 +209,14 @@ struct AppearanceSettingsTab: View {
     }
 
     /// Pulls a file URL out of a drop and hands it to `apply` on the main actor.
-    /// `apply` is `@Sendable` because the provider calls back off the main
-    /// thread; the stores it captures are `@MainActor` classes, so sending them
-    /// is safe.
-    private func loadDroppedImage(_ providers: [NSItemProvider], apply: @escaping @Sendable (URL) -> Void) -> Bool {
+    ///
+    /// The provider calls back off the main thread, so `apply` is `@Sendable`;
+    /// marking it `@MainActor` is what lets it touch the stores, and it's only
+    /// ever invoked from inside a main-actor task.
+    private func loadDroppedImage(
+        _ providers: [NSItemProvider],
+        apply: @escaping @Sendable @MainActor (URL) -> Void
+    ) -> Bool {
         guard let provider = providers.first else { return false }
         _ = provider.loadObject(ofClass: URL.self) { url, _ in
             guard let url else { return }
