@@ -126,12 +126,20 @@ struct MenuBarMenu: View {
         }
         .padding(10)
         .frame(width: 340)
+        // Report the content's exact height so the hosting window sizes to it.
+        // `MenuBarExtra(.window)` reuses one window and doesn't reliably shrink
+        // it when the content gets shorter — which is what happens the moment a
+        // build finishes and the "Building Now" block goes away.
+        .fixedSize(horizontal: false, vertical: true)
+        // Paint the whole window, not just the content. If the window is ever
+        // left taller than the content, the leftover strip shows this material
+        // instead of bare window background — the light band across the top.
+        .background(PanelBackground().ignoresSafeArea())
         // No `preferredColorScheme` here on purpose. It's a preference that
         // propagates to the hosting window and is applied asynchronously, so
         // the panel's own chrome and its SwiftUI content could end up in
-        // different appearances for a frame — the intermittent light band at
-        // the top of the panel. Menu bar panels follow the system menu
-        // appearance, which is also what every native one does.
+        // different appearances for a frame. Menu bar panels follow the system
+        // menu appearance, which is also what every native one does.
         .task { await devices.refresh() }
     }
 
@@ -364,6 +372,22 @@ struct MenuBarMenu: View {
     private func closePanel() {
         dismiss()
     }
+}
+
+// MARK: - Background
+
+/// The native menu material, drawn behind the panel across the entire hosting
+/// window so no part of it can render as bare window background.
+private struct PanelBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .menu
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
 // MARK: - Rows
