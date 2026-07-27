@@ -108,7 +108,12 @@ struct iOSBuildManagerApp: App {
                 .environmentObject(model.branding)
                 .environmentObject(model.github)
         } label: {
-            Image(nsImage: Self.menuBarIcon)
+            // While building, the status item itself carries the progress, so
+            // it's visible without opening the panel. Everything is drawn into
+            // one image rather than composed from views: a single
+            // `Image(nsImage:)` is the form MenuBarExtra renders reliably, and
+            // keeping the label one view type means it never restructures.
+            Image(nsImage: model.buildPercent.map(Self.buildingIcon(percent:)) ?? Self.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
     }
@@ -125,4 +130,61 @@ struct iOSBuildManagerApp: App {
         image.isTemplate = true
         return image
     }()
+
+    /// The glyph with a progress bar under it and the percentage beside it,
+    /// drawn as one template image so the menu bar tints it for light and dark
+    /// automatically. The unfilled part of the track is the same colour at low
+    /// alpha, which template images preserve.
+    static func buildingIcon(percent: Int) -> NSImage {
+        let clamped = min(max(percent, 0), 100)
+        let label = "\(clamped)%" as NSString
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 10, weight: .medium),
+            .foregroundColor: NSColor.black,
+        ]
+        let labelSize = label.size(withAttributes: attributes)
+
+        let glyphWidth: CGFloat = 16
+        let gap: CGFloat = 3
+        let barHeight: CGFloat = 2.5
+        let size = NSSize(width: glyphWidth + gap + ceil(labelSize.width), height: 15)
+
+        let image = NSImage(size: size)
+        image.lockFocus()
+
+        let configuration = NSImage.SymbolConfiguration(pointSize: 9.5, weight: .regular)
+        if let glyph = NSImage(systemSymbolName: "shippingbox.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(configuration) {
+            glyph.draw(
+                in: NSRect(x: (glyphWidth - glyph.size.width) / 2,
+                           y: barHeight + 2,
+                           width: glyph.size.width,
+                           height: glyph.size.height),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1
+            )
+        }
+
+        let radius = barHeight / 2
+        NSColor.black.withAlphaComponent(0.3).setFill()
+        NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: glyphWidth, height: barHeight),
+                     xRadius: radius, yRadius: radius).fill()
+
+        let filled = glyphWidth * CGFloat(clamped) / 100
+        if filled > 0 {
+            NSColor.black.setFill()
+            NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: max(filled, barHeight), height: barHeight),
+                         xRadius: radius, yRadius: radius).fill()
+        }
+
+        label.draw(
+            at: NSPoint(x: glyphWidth + gap, y: (size.height - labelSize.height) / 2),
+            withAttributes: attributes
+        )
+
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
+    }
 }

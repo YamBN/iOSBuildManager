@@ -9,6 +9,9 @@ final class AppModel: ObservableObject {
     @Published var selection: SidebarSection = .dashboard
     @Published var selectedProjectId: UUID?
     @Published var availableUpdate: AvailableUpdate?
+    /// Whole-percent build progress, mirrored into the menu bar so it's visible
+    /// without opening the panel. Nil when no build is running.
+    @Published private(set) var buildPercent: Int?
 
     let settings: SettingsStore
     let projects: ProjectStore
@@ -45,6 +48,13 @@ final class AppModel: ObservableObject {
         branding.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
+
+        // Drives the menu bar's live percentage. The engine only calls this
+        // when the whole number changes, so the scene re-evaluates at most
+        // once per percent instead of on every log line.
+        engine.onProgressPercent = { [weak self] percent in
+            self?.buildPercent = percent
+        }
 
         // Migrate LaunchAgents installed under old bundle identifiers; if one
         // existed and scheduling is still on, re-install it under the current

@@ -300,6 +300,35 @@ final class BrandingNormalizationTests: XCTestCase {
     }
 }
 
+@MainActor
+final class MenuBarProgressIconTests: XCTestCase {
+    func testIsATemplateSoTheMenuBarCanTintIt() {
+        XCTAssertTrue(iOSBuildManagerApp.buildingIcon(percent: 50).isTemplate)
+    }
+
+    func testWidthGrowsWithTheNumberOfDigits() {
+        let one = iOSBuildManagerApp.buildingIcon(percent: 5).size.width
+        let two = iOSBuildManagerApp.buildingIcon(percent: 50).size.width
+        let three = iOSBuildManagerApp.buildingIcon(percent: 100).size.width
+        XCTAssertLessThan(one, two)
+        XCTAssertLessThan(two, three)
+    }
+
+    func testOutOfRangeValuesAreClampedToTheSameWidthAsTheBounds() {
+        // Clamping keeps a bogus value from drawing a bar past the track.
+        XCTAssertEqual(iOSBuildManagerApp.buildingIcon(percent: -20).size.width,
+                       iOSBuildManagerApp.buildingIcon(percent: 0).size.width)
+        XCTAssertEqual(iOSBuildManagerApp.buildingIcon(percent: 500).size.width,
+                       iOSBuildManagerApp.buildingIcon(percent: 100).size.width)
+    }
+
+    func testHasANonZeroDrawnSize() {
+        let icon = iOSBuildManagerApp.buildingIcon(percent: 42)
+        XCTAssertGreaterThan(icon.size.width, 0)
+        XCTAssertEqual(icon.size.height, 15)
+    }
+}
+
 final class BuildBrandingTests: XCTestCase {
     private func makeBundle(isMac: Bool, iconNames: [String] = []) throws -> URL {
         let root = FileManager.default.temporaryDirectory

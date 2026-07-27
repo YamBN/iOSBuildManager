@@ -46,6 +46,12 @@ final class BuildEngine: ObservableObject {
     /// (shows an indeterminate spinner instead of a percentage).
     @Published private(set) var estimatedProgress: Double?
 
+    /// Called with the whole-percent progress while building, and with nil when
+    /// it stops. Only fires when the number actually changes, so the menu bar
+    /// status item isn't re-rendered on every log line or timer tick.
+    var onProgressPercent: ((Int?) -> Void)?
+    private var lastReportedPercent: Int?
+
     private var process: Process?
     private var consumerTask: Task<Void, Never>?
     private var progressTicker: Task<Void, Never>?
@@ -185,6 +191,7 @@ final class BuildEngine: ObservableObject {
                     let elapsed = Date().timeIntervalSince(startedAt)
                     self.elapsedSeconds = elapsed
                     self.estimatedProgress = BuildProgressEstimator.progress(elapsed: elapsed, expected: self.expectedDuration)
+                    self.reportPercent(self.estimatedProgress.map { Int($0 * 100) })
                 }
                 try? await Task.sleep(nanoseconds: 500_000_000)
             }
@@ -194,6 +201,13 @@ final class BuildEngine: ObservableObject {
     private func stopProgressTicker() {
         progressTicker?.cancel()
         progressTicker = nil
+        reportPercent(nil)
+    }
+
+    private func reportPercent(_ percent: Int?) {
+        guard percent != lastReportedPercent else { return }
+        lastReportedPercent = percent
+        onProgressPercent?(percent)
     }
 
     private func finalize(exitCode: Int32) async {

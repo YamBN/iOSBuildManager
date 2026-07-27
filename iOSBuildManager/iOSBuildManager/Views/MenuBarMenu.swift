@@ -126,7 +126,12 @@ struct MenuBarMenu: View {
         }
         .padding(10)
         .frame(width: 340)
-        .preferredColorScheme(settings.settings.theme.colorScheme)
+        // No `preferredColorScheme` here on purpose. It's a preference that
+        // propagates to the hosting window and is applied asynchronously, so
+        // the panel's own chrome and its SwiftUI content could end up in
+        // different appearances for a frame — the intermittent light band at
+        // the top of the panel. Menu bar panels follow the system menu
+        // appearance, which is also what every native one does.
         .task { await devices.refresh() }
     }
 
@@ -232,7 +237,6 @@ struct MenuBarMenu: View {
         }
         .padding(8)
         .frame(width: 240)
-        .preferredColorScheme(settings.settings.theme.colorScheme)
     }
 
     private func installOnDevice(id: String, name: String) {
