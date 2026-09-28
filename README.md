@@ -20,10 +20,10 @@ rebuilds and automatic re-installs.
 ## Why
 
 Free Apple ID signing expires every 7 days, after which sideloaded apps stop
-launching. The usual fix is a manual treadmill: open Xcode, rebuild, repackage,
+launching. The usual fix is a manual treadmill: open Xcode, plug your phone to your mac, rebuild, repackage,
 re-install. iOS Build Manager automates the whole loop:
 
-**build → package IPA → upload to iCloud → re-install on device → notify you.**
+**build → package IPA → upload to iCloud - All through GUI with automation optional. Then, all you have to do is to re-install it.**
 
 No paid Apple Developer Program required. Nothing here bypasses Apple security —
 the app builds and packages exactly what Xcode signs.
