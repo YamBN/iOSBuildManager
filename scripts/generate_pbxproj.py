@@ -429,12 +429,12 @@ def main():
         "INFOPLIST_KEY_LS_APPLICATION_CATEGORY_TYPE": "public.app-category.developer-tools",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "Local-only developer tool. No analytics, no tracking.",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @executable_path/../Frameworks",
-        "MARKETING_VERSION": "1.7.1",
+        "MARKETING_VERSION": "1.8.0",
         "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID,
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "SWIFT_EMIT_LOC_STRINGS": "YES",
         "SWIFT_VERSION": "6.0",
-        "CURRENT_PROJECT_VERSION": "12",
+        "CURRENT_PROJECT_VERSION": "13",
     }
     target_debug = dict(common_target)
     target_release = dict(common_target)
@@ -450,10 +450,10 @@ def main():
         "BUNDLE_LOADER": "$(TEST_HOST)",
         "CODE_SIGN_IDENTITY": "-",
         "CODE_SIGN_STYLE": "Automatic",
-        "CURRENT_PROJECT_VERSION": "12",
+        "CURRENT_PROJECT_VERSION": "13",
         "GENERATE_INFOPLIST_FILE": "YES",
         "MACOSX_DEPLOYMENT_TARGET": "13.0",
-        "MARKETING_VERSION": "1.7.1",
+        "MARKETING_VERSION": "1.8.0",
         "PRODUCT_BUNDLE_IDENTIFIER": TEST_BUNDLE_ID,
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "SWIFT_EMIT_LOC_STRINGS": "NO",

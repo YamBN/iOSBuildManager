@@ -16,10 +16,29 @@ jobs:
       - name: Build DMG + standalone app
         run: ./scripts/make-dmg.sh
 
+      - name: Prepare release notes from changelog
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          tag = os.environ["RELEASE_TAG"]
+          version = tag.removeprefix("v")
+          changelog = Path("CHANGELOG.md").read_text()
+          section = next((part for part in changelog.split("\n## ") if part.startswith(version + " — ")), None)
+          if section is None:
+              raise SystemExit("Missing changelog entry for " + tag)
+          notes = section.split("\n", 1)[1].strip()
+          notes = notes.replace("(docs/automation-queue.md)", "(https://github.com/YamBN/iOSBuildManager/blob/" + tag + "/docs/automation-queue.md)")
+          Path("release-notes.md").write_text(notes + "\n")
+          PY
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/iOSBuildManager-*.dmg
             dist/iOSBuildManager-*.app.zip
-          generate_release_notes: true
+          body_path: release-notes.md
+          fail_on_unmatched_files: true

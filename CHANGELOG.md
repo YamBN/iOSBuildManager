@@ -5,7 +5,7 @@ The source of truth for the app version is `iOSBuildManager/iOSBuildManager/Mode
 (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) are kept in sync. The in-app
 About / Settings screens show the latest 3 entries below.
 
-## Unreleased — 2026-10-12
+## 1.8.0 — 2026-10-12
 
 ### Added
 
@@ -23,6 +23,9 @@ About / Settings screens show the latest 3 entries below.
 - Queue status, recent requests, failures, and artifact shortcuts in Builds.
 
 ### Changed
+
+- App bundle version metadata now follows the Xcode build settings, matching
+  the version displayed inside the app and in download filenames.
 
 - Manual and scheduled builds now enter the same queue. Scheduled builds retain
   their cadence and optional connected-device installation.
