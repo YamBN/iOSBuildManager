@@ -28,6 +28,13 @@ re-install. iOS Build Manager automates the whole loop:
 No paid Apple Developer Program required. Nothing here bypasses Apple security —
 the app builds and packages exactly what Xcode signs.
 
+## AI and command-line builds
+
+Submit builds without driving the GUI. The bundled `iosbuild.py` CLI gives each
+request an ID, and a persistent queue runs requests from multiple projects one
+at a time through the existing build engine. GUI and scheduled builds use the
+same queue. See [CLI usage, recovery, and agent instructions](docs/automation-queue.md).
+
 ## Features
 
 - **Dashboard** — latest build, live build status, quick actions, recent builds

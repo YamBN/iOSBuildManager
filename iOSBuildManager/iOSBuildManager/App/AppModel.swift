@@ -18,6 +18,7 @@ final class AppModel: ObservableObject {
     let history: BuildHistoryStore
     let devices: DeviceStore
     let engine: BuildEngine
+    let buildQueue: BuildQueue
     let profiles: ProvisioningProfileStore
     let certificates: CertificateStore
     let branding: BrandingStore
@@ -32,6 +33,7 @@ final class AppModel: ObservableObject {
         self.history = BuildHistoryStore()
         self.devices = DeviceStore()
         self.engine = BuildEngine()
+        self.buildQueue = BuildQueue(directory: AppPaths.supportURL.appendingPathComponent("Queue"))
         self.profiles = ProvisioningProfileStore()
         self.certificates = CertificateStore()
         self.branding = BrandingStore()
@@ -56,12 +58,28 @@ final class AppModel: ObservableObject {
             self?.buildPercent = percent
         }
 
+        buildQueue.objectWillChange
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+        buildQueue.resolve = { [weak self] request in
+            guard let self else { throw BuildError.packagingFailed("Application unavailable.") }
+            return try self.resolveBuildRequest(request)
+        }
+        buildQueue.run = { [weak self] job in self?.runQueuedBuild(job) }
+        // Hosted tests must not consume a developer's real queue or rewrite launchd.
+        guard !AppPaths.isTesting else { return }
+        buildQueue.start()
+
         // Migrate LaunchAgents installed under old bundle identifiers; if one
         // existed and scheduling is still on, re-install it under the current
         // identifier so scheduled builds keep working after the rename.
         Task { [weak self] in
             let hadLegacy = await SchedulerService.removeLegacyAgents()
-            if hadLegacy { await self?.applySchedulerSettings() }
+            // Reinstall an enabled schedule so older direct-build scripts also
+            // go through the single queue. Preserve the user's chosen cadence.
+            if hadLegacy || self?.settings.settings.scheduledBuildsEnabled == true {
+                await self?.applySchedulerSettings()
+            }
         }
     }
 
@@ -69,12 +87,92 @@ final class AppModel: ObservableObject {
 
     func startBuild(for projectId: UUID) {
         guard let project = projects.project(with: projectId) else { return }
-        engine.startBuild(
-            project: project,
-            settings: settings.settings,
-            history: history,
-            projectStore: projects
-        )
+        submitBuild(project: project)
+    }
+
+    private func submitBuild(project: Project, clean: Bool = false) {
+        do {
+            try buildQueue.submit(BuildRequest(projectId: project.id, clean: clean))
+        } catch {
+            NotificationService.post(title: "Could not queue build", body: error.localizedDescription)
+        }
+    }
+
+    private func resolveBuildRequest(_ request: BuildRequest) throws -> (Project, AppSettings) {
+        var project: Project
+        if let id = request.projectId, request.projectPath == nil,
+           let saved = projects.project(with: id) {
+            project = saved
+        } else if request.projectId == nil, let path = request.projectPath,
+                  path.hasPrefix("/"), FileManager.default.fileExists(atPath: path),
+                  let location = Self.resolveProjectLocation(URL(fileURLWithPath: path)) {
+            if let saved = projects.projects.first(where: { $0.path == location.path }) {
+                project = saved
+            } else {
+                project = Project(name: location.name, path: location.path,
+                                  isWorkspace: location.kind == .xcworkspace)
+                project.kindRaw = location.kind.rawValue
+                if location.kind == .swiftPackage {
+                    project.detectedPlatform = .macOS
+                    project.destination = .macOS
+                }
+            }
+        } else {
+            throw BuildError.packagingFailed("Supply an existing project ID or an absolute project path.")
+        }
+        guard FileManager.default.fileExists(atPath: project.path) else {
+            throw BuildError.packagingFailed("Project path does not exist.")
+        }
+        if let scheme = request.scheme { project.selectedScheme = scheme }
+        guard let scheme = project.selectedScheme, !scheme.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw BuildError.packagingFailed("A scheme/product is required. Pass --scheme or configure the project in the app.")
+        }
+        if let raw = request.configuration {
+            guard let configuration = BuildConfiguration(rawValue: raw) else {
+                throw BuildError.packagingFailed("Configuration must be Debug or Release.")
+            }
+            project.configuration = configuration
+        }
+        if projects.project(with: project.id) == nil { projects.upsert(project) }
+        var snapshot = settings.settings
+        if let output = request.outputDirectory {
+            guard output.hasPrefix("/") else { throw BuildError.packagingFailed("Output directory must be absolute.") }
+            snapshot.outputURL = URL(fileURLWithPath: output, isDirectory: true)
+        }
+        // Isolate artifacts, including latest.ipa, across projects AND requests.
+        // A later build must never overwrite the artifact referenced by a job.
+        snapshot.outputURL = snapshot.outputURL
+            .appendingPathComponent(project.id.uuidString, isDirectory: true)
+            .appendingPathComponent(request.id.uuidString, isDirectory: true)
+        // Automatic cleanup may not invalidate another job's artifact receipt.
+        snapshot.autoCleanOldBuilds = false
+        return (project, snapshot)
+    }
+
+    private func runQueuedBuild(_ job: QueuedBuild) {
+        guard let project = job.project, let snapshot = job.settings, !engine.isBuilding else {
+            buildQueue.complete(state: "failed", error: "Build engine unavailable or invalid saved job.")
+            return
+        }
+        if job.request.clean == true { cleanBuildFolder(for: project) }
+        engine.onCompletion = { [weak self] status, record, error in
+            guard let self else { return }
+            Task { @MainActor in
+                var installation: String?
+                if status == .success, job.request.installOnDevice == true, let path = record?.appPath {
+                    await self.devices.refresh()
+                    if case .connectedDevice(let id, _)? = self.devices.devices.first {
+                        do {
+                            try await self.devices.install(appPath: path, deviceId: id)
+                            installation = "installed"
+                        } catch { installation = "Install failed: \(error.localizedDescription)" }
+                    } else { installation = "No connected device; install manually." }
+                }
+                self.buildQueue.complete(state: status == .success ? "succeeded" : status.rawValue,
+                    artifactPath: record?.outputURL.path, error: error, installResult: installation)
+            }
+        }
+        engine.startBuild(project: project, settings: snapshot, history: history, projectStore: projects)
     }
 
     var selectedProject: Project? {
@@ -201,8 +299,7 @@ final class AppModel: ObservableObject {
     /// Clean build folder, then build from scratch.
     func rebuild(projectId: UUID) {
         guard let project = projects.project(with: projectId) else { return }
-        cleanBuildFolder(for: project)
-        startBuild(for: project.id)
+        submitBuild(project: project, clean: true)
     }
 
     /// Installs the latest successful build onto the first connected device,

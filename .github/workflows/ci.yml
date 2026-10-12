@@ -16,6 +16,9 @@ jobs:
           python3 scripts/generate_pbxproj.py
           git diff --exit-code -- iOSBuildManager/iOSBuildManager.xcodeproj
 
+      - name: CLI concurrency and contract tests
+        run: python3 -m unittest discover -s scripts/tests -v
+
       - name: Build (Release)
         run: |
           xcodebuild -project iOSBuildManager/iOSBuildManager.xcodeproj \

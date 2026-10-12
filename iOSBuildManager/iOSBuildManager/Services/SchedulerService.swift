@@ -38,7 +38,10 @@ enum SchedulerService {
     /// the LaunchAgent plist, and loads it with `launchctl`.
     static func enable(project: Project, settings: AppSettings) async throws {
         AppPaths.ensureDirectories()
-        try ScriptGenerator.installHelperScript()
+        guard let cli = Bundle.main.url(forResource: "iosbuild", withExtension: "py") else {
+            throw BuildError.packagingFailed("Bundled CLI is missing.")
+        }
+        try Data(contentsOf: cli).write(to: AppPaths.supportURL.appendingPathComponent("iosbuild.py"), options: .atomic)
 
         let script = ScriptGenerator.generateScheduledBuildScript(for: project)
         try script.write(to: AppPaths.scheduledBuildScriptURL, atomically: true, encoding: .utf8)

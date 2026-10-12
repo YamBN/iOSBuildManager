@@ -52,6 +52,10 @@ final class BuildEngine: ObservableObject {
     var onProgressPercent: ((Int?) -> Void)?
     private var lastReportedPercent: Int?
 
+    /// Delivered only after packaging/history and process cleanup have finished.
+    var onCompletion: ((BuildStatus, BuildRecord?, String?) -> Void)?
+    private var completedRecord: BuildRecord?
+
     private var process: Process?
     private var consumerTask: Task<Void, Never>?
     private var progressTicker: Task<Void, Never>?
@@ -81,6 +85,7 @@ final class BuildEngine: ObservableObject {
         self.currentProject = project
         self.currentSettings = settings
         self.isCancelling = false
+        self.completedRecord = nil
 
         status = .building
         currentProjectName = project.name
@@ -134,6 +139,8 @@ final class BuildEngine: ObservableObject {
             lastError = error.localizedDescription
             status = .failed
             channel.finish()
+            stopProgressTicker()
+            onCompletion?(.failed, nil, lastError)
             return
         }
 
@@ -220,6 +227,7 @@ final class BuildEngine: ObservableObject {
             channel = nil
             exitBox = nil
             consumerTask = nil
+            onCompletion?(status, completedRecord, lastError)
         }
 
         guard let project = currentProject, let settings = currentSettings else {
@@ -322,6 +330,7 @@ final class BuildEngine: ObservableObject {
                 durationSeconds: duration,
                 log: logLines.joined(separator: "\n")
             )
+            completedRecord = record
             history?.add(record)
             if settings.autoCleanOldBuilds {
                 history?.prune(to: settings.keepBuildHistoryCount)

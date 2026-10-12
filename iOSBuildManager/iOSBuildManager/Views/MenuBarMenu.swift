@@ -25,7 +25,10 @@ struct MenuBarMenu: View {
         model.selectedProject ?? projects.projects.first
     }
 
-    private var latest: BuildRecord? { history.mostRecentSuccess }
+    private var latest: BuildRecord? {
+        guard let project else { return history.mostRecentSuccess }
+        return history.mostRecentSuccess(for: project.id)
+    }
 
     /// The built `.app` whose icon represents the current project (nil → the
     /// panel shows iOS Build Manager's own icon).
@@ -50,7 +53,7 @@ struct MenuBarMenu: View {
                 closePanel()
             }
             .keyboardShortcut("b", modifiers: .command)
-            .disabled(project == nil || engine.isBuilding)
+            .disabled(project == nil)
 
             PanelRow(icon: "arrow.clockwise", title: "Rebuild", shortcut: "⇧⌘B") {
                 if let project {
@@ -59,7 +62,7 @@ struct MenuBarMenu: View {
                 closePanel()
             }
             .keyboardShortcut("b", modifiers: [.command, .shift])
-            .disabled(project == nil || engine.isBuilding)
+            .disabled(project == nil)
 
             PanelRow(icon: "trash", title: "Clean Build Folder", shortcut: "⌥⌘K") {
                 if let project {
@@ -74,7 +77,7 @@ struct MenuBarMenu: View {
             divider
 
             PanelRow(icon: "doc", title: "Open Latest IPA", shortcut: "⌘O") {
-                FinderActions.reveal(settings.settings.outputURL.appendingPathComponent("latest.ipa"))
+                if let latest { FinderActions.reveal(latest.outputURL) }
                 closePanel()
             }
             .keyboardShortcut("o", modifiers: .command)

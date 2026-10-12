@@ -18,3 +18,7 @@ build/
 # Distribution artifacts
 build/
 dist/
+
+# Python CLI/test bytecode
+__pycache__/
+*.pyc

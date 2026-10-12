@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4C5657D11454819C7BD6CEA9 /* iOSBuildManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD59264296E7E162486B3F43 /* iOSBuildManagerApp.swift */; };
 		212946B5E0F50666F5B233E4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 75BF13ED91CA0F736C14DA83 /* Assets.xcassets */; };
+		AB913B26A14B3DFF7C97A24E /* iosbuild.py in Resources */ = {isa = PBXBuildFile; fileRef = 7220440C732031312DF71A34 /* iosbuild.py */; };
 		0E8D0B2C2B0086265C7F8F11 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F3D4C0BFECB4B77E08A7345 /* AppModel.swift */; };
 		9ED19A951152D7AEC18A4FFD /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D59F0E2131F76466143DB6 /* AppVersion.swift */; };
 		CEE50AC401C510874B1D7EAF /* BuildRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26794A2671D54A555581BF94 /* BuildRecord.swift */; };
@@ -20,6 +21,7 @@
 		94B128569E772000B17E1287 /* SigningIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E6A9D397D702B334CEBA538 /* SigningIdentity.swift */; };
 		DBECF167E4F2815E9217A8C0 /* SigningHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE24DD0449951FCA5D06E50 /* SigningHealth.swift */; };
 		FB46284B26B55FC2A51CA244 /* BuildEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666B997F3C20C9E8474DFD40 /* BuildEngine.swift */; };
+		E2C5474CC73998EF38216BCB /* BuildQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EBA8E0EB38E889CF4C9C45 /* BuildQueue.swift */; };
 		A581E65C3CE000F1E9C92C21 /* BuildError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80D703D9D52AAF6DF4ECB78 /* BuildError.swift */; };
 		2218BCBEB0DEE09505EB5694 /* BuildHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A3FDB54DF8B50F96E4F99 /* BuildHistoryStore.swift */; };
 		235F7CE6FBFD5A4E55AA67E4 /* DeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57ED8409E23A56A50C86A96E /* DeviceService.swift */; };
@@ -67,6 +69,7 @@
 		0D4CE4F89D1E2363A0E29484 /* ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE7A150D3B4D7D9959E68D7 /* ParsingTests.swift */; };
 		3069A67AB1D6DA68FDFBB586 /* PackagingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5789B4715882632149836B6 /* PackagingTests.swift */; };
 		A4F1A97B32DCF5FC9EC61CFF /* AppModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273B7B1CB462B7CD1F66C55A /* AppModelTests.swift */; };
+		A8B2FCFD418C39F346A728F6 /* BuildQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731672E117FCE0C686513AB7 /* BuildQueueTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +85,7 @@
 /* Begin PBXFileReference section */
 		FD59264296E7E162486B3F43 /* iOSBuildManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "iOSBuildManagerApp.swift"; sourceTree = "<group>"; };
 		75BF13ED91CA0F736C14DA83 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets.xcassets"; sourceTree = "<group>"; };
+		7220440C732031312DF71A34 /* iosbuild.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "iosbuild.py"; sourceTree = "<group>"; };
 		8F3D4C0BFECB4B77E08A7345 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppModel.swift"; sourceTree = "<group>"; };
 		14D59F0E2131F76466143DB6 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppVersion.swift"; sourceTree = "<group>"; };
 		26794A2671D54A555581BF94 /* BuildRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildRecord.swift"; sourceTree = "<group>"; };
@@ -93,6 +97,7 @@
 		0E6A9D397D702B334CEBA538 /* SigningIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SigningIdentity.swift"; sourceTree = "<group>"; };
 		0CE24DD0449951FCA5D06E50 /* SigningHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SigningHealth.swift"; sourceTree = "<group>"; };
 		666B997F3C20C9E8474DFD40 /* BuildEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildEngine.swift"; sourceTree = "<group>"; };
+		50EBA8E0EB38E889CF4C9C45 /* BuildQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildQueue.swift"; sourceTree = "<group>"; };
 		F80D703D9D52AAF6DF4ECB78 /* BuildError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildError.swift"; sourceTree = "<group>"; };
 		796A3FDB54DF8B50F96E4F99 /* BuildHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildHistoryStore.swift"; sourceTree = "<group>"; };
 		57ED8409E23A56A50C86A96E /* DeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeviceService.swift"; sourceTree = "<group>"; };
@@ -143,6 +148,7 @@
 		3CE7A150D3B4D7D9959E68D7 /* ParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ParsingTests.swift"; sourceTree = "<group>"; };
 		C5789B4715882632149836B6 /* PackagingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PackagingTests.swift"; sourceTree = "<group>"; };
 		273B7B1CB462B7CD1F66C55A /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppModelTests.swift"; sourceTree = "<group>"; };
+		731672E117FCE0C686513AB7 /* BuildQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildQueueTests.swift"; sourceTree = "<group>"; };
 		14F2CDF734D2176A35A777E3 /* iOSBuildManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iOSBuildManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -169,6 +175,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				212946B5E0F50666F5B233E4 /* Assets.xcassets in Resources */,
+				AB913B26A14B3DFF7C97A24E /* iosbuild.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +198,7 @@
 				94B128569E772000B17E1287 /* SigningIdentity.swift in Sources */,
 				DBECF167E4F2815E9217A8C0 /* SigningHealth.swift in Sources */,
 				FB46284B26B55FC2A51CA244 /* BuildEngine.swift in Sources */,
+				E2C5474CC73998EF38216BCB /* BuildQueue.swift in Sources */,
 				A581E65C3CE000F1E9C92C21 /* BuildError.swift in Sources */,
 				2218BCBEB0DEE09505EB5694 /* BuildHistoryStore.swift in Sources */,
 				235F7CE6FBFD5A4E55AA67E4 /* DeviceService.swift in Sources */,
@@ -245,6 +253,7 @@
 				0D4CE4F89D1E2363A0E29484 /* ParsingTests.swift in Sources */,
 				3069A67AB1D6DA68FDFBB586 /* PackagingTests.swift in Sources */,
 				A4F1A97B32DCF5FC9EC61CFF /* AppModelTests.swift in Sources */,
+				A8B2FCFD418C39F346A728F6 /* BuildQueueTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,6 +354,7 @@
 				3CE7A150D3B4D7D9959E68D7,
 				C5789B4715882632149836B6,
 				273B7B1CB462B7CD1F66C55A,
+				731672E117FCE0C686513AB7,
 			);
 			name = "iOSBuildManagerTests"; path = "iOSBuildManagerTests"; sourceTree = "<group>";
 		};
@@ -367,6 +377,7 @@
 			isa = PBXGroup;
 			children = (
 				75BF13ED91CA0F736C14DA83,
+				7220440C732031312DF71A34,
 			);
 			name = "Resources"; path = "Resources"; sourceTree = "<group>";
 		};
@@ -396,6 +407,7 @@
 			isa = PBXGroup;
 			children = (
 				666B997F3C20C9E8474DFD40,
+				50EBA8E0EB38E889CF4C9C45,
 				F80D703D9D52AAF6DF4ECB78,
 				796A3FDB54DF8B50F96E4F99,
 				57ED8409E23A56A50C86A96E,

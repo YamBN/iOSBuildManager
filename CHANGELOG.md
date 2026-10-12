@@ -5,6 +5,52 @@ The source of truth for the app version is `iOSBuildManager/iOSBuildManager/Mode
 (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) are kept in sync. The in-app
 About / Settings screens show the latest 3 entries below.
 
+## Unreleased — 2026-10-12
+
+### Added
+
+- A bundled, local `iosbuild.py` CLI for AI agents and scripts to submit builds,
+  list projects, inspect queue/job status, wait for results, cancel queued jobs,
+  and resume dispatch after an interrupted worker. No Computer Use or HTTP server
+  is needed. See [usage and agent instructions](docs/automation-queue.md).
+- One persistent queue shared by GUI, CLI, and scheduled builds, using the
+  existing `BuildEngine`. A process lock permits only one worker, and each
+  accepted request receives a durable ID and result.
+- Request IDs prevent duplicate execution when a client retries a submission.
+  Project/configuration/output settings are captured when a request is accepted.
+- Separate output directories for every project and request, preventing IPA and
+  `latest.ipa` collisions. Successful receipts provide the exact artifact path.
+- Queue status, recent requests, failures, and artifact shortcuts in Builds.
+
+### Changed
+
+- Manual and scheduled builds now enter the same queue. Scheduled builds retain
+  their cadence and optional connected-device installation.
+- Rebuild cleanup runs only when its queued job starts. Menu-bar build actions
+  can enqueue work while another build is active; Open Latest uses the selected
+  project's build history.
+- Pending requests survive app closure. Interrupted work is recorded explicitly
+  and dispatch pauses until the user has checked for orphan build processes and
+  explicitly resumes it. Corrupt state or persistence errors stop dispatch.
+- Queued artifacts are retained rather than automatically deleted. Source files
+  are read from the working tree when execution begins, not snapshotted; keep
+  each checkout stable until its build completes.
+
+### Verification
+
+- Release build completed; 83 Swift tests and 4 CLI tests passed locally,
+  including 24 concurrent CLI submissions, serialized dispatch, recovery,
+  cancellation, duplicate prevention, and persistence failures.
+- An end-to-end test exercised CLI → queue → Xcode → IPA packaging, continuing
+  after an intentionally failed build and producing isolated artifacts from
+  two iOS fixture projects.
+- A live project build through the installed CLI completed, passed 62 artifact
+  checks and strict signature verification, and retained the exported game pack
+  unchanged. Apple's local iCloud metadata reported the artifact fully uploaded.
+- Physical-iPhone installation and live UI acceptance were not tested by this
+  update. Build success alone does not establish iCloud synchronization or
+  device installation; upload status was checked separately in the live test.
+
 ## 1.2.0 — 2026-07-09
 
 - Checks GitHub Releases on launch and shows an **Update Available** sheet

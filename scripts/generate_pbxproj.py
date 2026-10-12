@@ -40,7 +40,7 @@ GROUPS = [
                 "BuildStatus.swift", "Project.swift", "SidebarSection.swift",
                 "ProvisioningProfile.swift", "SigningIdentity.swift",
                 "SigningHealth.swift"], []),
-    ("Services", ["BuildEngine.swift", "BuildError.swift", "BuildHistoryStore.swift",
+    ("Services", ["BuildEngine.swift", "BuildQueue.swift", "BuildError.swift", "BuildHistoryStore.swift",
                   "DeviceService.swift", "FinderActions.swift", "IPAPackager.swift",
                   "Paths.swift", "ProcessStreaming.swift", "ProjectStore.swift",
                   "SchedulerService.swift", "ScriptGenerator.swift", "SettingsStore.swift",
@@ -57,7 +57,7 @@ GROUPS = [
 ]
 
 TOP_FILES = ["iOSBuildManagerApp.swift"]
-RES_FILES = ["Assets.xcassets"]  # lives in Resources/
+RES_FILES = ["Assets.xcassets", "iosbuild.py"]  # lives in Resources/
 
 PRODUCT_NAME = "iOSBuildManager"
 BUNDLE_ID = "com.yambn.iOSBuildManager"
@@ -67,7 +67,7 @@ INFOPLIST = "iOSBuildManager/Info.plist"
 # Unit test target (hosted in the app so @testable import works).
 TEST_TARGET_NAME = "iOSBuildManagerTests"
 TEST_ROOT = "iOSBuildManagerTests"  # sibling folder of SRC_ROOT
-TEST_FILES = ["ParsingTests.swift", "PackagingTests.swift", "AppModelTests.swift"]
+TEST_FILES = ["ParsingTests.swift", "PackagingTests.swift", "AppModelTests.swift", "BuildQueueTests.swift"]
 TEST_BUNDLE_ID = "com.yambn.iOSBuildManagerTests"
 
 
@@ -112,7 +112,7 @@ def main():
     build_files = {}  # fullpath -> uid
     for full, base in file_paths:
         file_refs[full] = uid("fileref:" + full)
-        if full.endswith(".swift") or full.endswith(".xcassets"):
+        if full.endswith(".swift") or (full.endswith(".xcassets") or full.endswith(".py")):
             build_files[full] = uid("buildfile:" + full)
 
     group_uids = {p: uid("group:" + p) for p in group_paths}
@@ -162,6 +162,8 @@ def main():
     for full, base in file_paths:
         if full.endswith(".swift"):
             ftype = "sourcecode.swift"
+        elif full.endswith(".py"):
+            ftype = "text.script.python"
         elif full.endswith(".xcassets"):
             ftype = "folder.assetcatalog"
         elif full.endswith(".entitlements"):
@@ -208,7 +210,7 @@ def main():
     for g in GROUPS:
         src_children.append(group_uids[f"{SRC_ROOT}/{g[0]}"])
 
-    resources_children = [file_refs[f"{SRC_ROOT}/Resources/Assets.xcassets"]]
+    resources_children = [file_refs[f"{SRC_ROOT}/Resources/{name}"] for name in RES_FILES]
 
     def render_group(uid_, name, path, children, indent="\t\t"):
         path_line = f'path = "{path}"; ' if path else ""
@@ -261,7 +263,7 @@ def main():
         "\t\t\tisa = PBXResourcesBuildPhase;",
         "\t\t\tbuildActionMask = 2147483647;",
         "\t\t\tfiles = (",
-        f"\t\t\t\t{asset_build} /* Assets.xcassets in Resources */,",
+        *[f"\t\t\t\t{build_files[f'{SRC_ROOT}/Resources/{name}']} /* {name} in Resources */," for name in RES_FILES],
         "\t\t\t);",
         "\t\t\trunOnlyForDeploymentPostprocessing = 0;",
         "\t\t};",

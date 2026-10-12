@@ -5,8 +5,16 @@ enum AppPaths {
     static let bundleIdentifier = "com.yambn.iOSBuildManager"
     static let schedulerIdentifier = "com.yambn.iOSBuildManager.scheduler"
 
+    static var isTesting: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
+    private static let testSupportURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("iOSBuildManager-tests-" + UUID().uuidString)
+
     static var supportURL: URL {
-        FileManager.default
+        if isTesting { return testSupportURL }
+        return FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
             .appendingPathComponent("iOSBuildManager", isDirectory: true)
