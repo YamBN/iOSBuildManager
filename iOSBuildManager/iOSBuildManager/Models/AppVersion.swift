@@ -77,7 +77,7 @@ enum AppVersion {
     /// Newest entry first.
     static let changelog: [ChangelogEntry] = [
         .init(version: "1.8.0", date: "2026-10-12", type: .minor,
-              summary: "Build from AI agents or scripts through the bundled CLI. Manual, scheduled, and CLI requests share a persistent queue with one build worker, retry deduplication, crash recovery, isolated artifacts, and visible job results."),
+              summary: "Build from AI agents or scripts through the bundled CLI. Manual, scheduled, and CLI requests share a persistent queue with one build worker, retry deduplication, crash recovery, isolated artifacts, and visible job results. The menu-bar box shows a waiting-job count alongside live estimated build progress."),
         .init(version: "1.7.1", date: "2026-07-27", type: .patch,
               summary: "Fixes the menu bar panel opening with a light band across the top after a build. The panel's window is now sized to its content and the menu material is painted across the whole window."),
         .init(version: "1.7.0", date: "2026-07-26", type: .minor,

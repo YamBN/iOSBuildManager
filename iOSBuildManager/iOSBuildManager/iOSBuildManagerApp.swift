@@ -113,9 +113,74 @@ struct iOSBuildManagerApp: App {
             // one image rather than composed from views: a single
             // `Image(nsImage:)` is the form MenuBarExtra renders reliably, and
             // keeping the label one view type means it never restructures.
-            Image(nsImage: model.buildPercent.map(Self.buildingIcon(percent:)) ?? Self.menuBarIcon)
+            Image(nsImage: Self.statusItemIcon(percent: model.buildPercent,
+                                               queuedCount: model.buildQueue.pendingCount))
+                .accessibilityLabel(Self.statusItemDescription(percent: model.buildPercent,
+                                                               queuedCount: model.buildQueue.pendingCount))
         }
         .menuBarExtraStyle(.window)
+    }
+
+    /// Queue badge and progress share one template image so the menu-bar item
+    /// keeps its stable shape and follows macOS light/dark tinting. Waiting jobs
+    /// exclude the active build; hide the badge entirely when the queue is empty.
+    static func statusItemIcon(percent: Int?, queuedCount: Int) -> NSImage {
+        guard queuedCount > 0 else {
+            return percent.map(buildingIcon(percent:)) ?? menuBarIcon
+        }
+        let badge = String(queuedCount) as NSString
+        let badgeAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 8, weight: .bold),
+            .foregroundColor: NSColor.black,
+        ]
+        let badgeSize = badge.size(withAttributes: badgeAttributes)
+        let badgeOrigin = NSPoint(x: 14, y: 18 - ceil(badgeSize.height))
+        let iconWidth = badgeOrigin.x + ceil(badgeSize.width)
+        let progress = percent.map { "\(min(max($0, 0), 100))%" as NSString }
+        let progressAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium),
+            .foregroundColor: NSColor.black,
+        ]
+        let progressSize = progress?.size(withAttributes: progressAttributes) ?? .zero
+        let width = iconWidth + (progress == nil ? 0 : 3 + ceil(progressSize.width))
+        let image = NSImage(size: NSSize(width: width, height: 18))
+        image.lockFocus()
+        let configuration = NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
+        if let glyph = NSImage(systemSymbolName: "shippingbox.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(configuration) {
+            glyph.draw(in: NSRect(x: 0, y: percent == nil ? 1 : 4,
+                                  width: 15, height: percent == nil ? 14 : 12),
+                       from: .zero, operation: .sourceOver, fraction: 1)
+        }
+        // Clear a small notch behind the superscript so it never blends into
+        // the box's edge. Alpha is preserved in both menu-bar appearances.
+        NSRect(x: badgeOrigin.x - 1, y: badgeOrigin.y,
+                                        width: ceil(badgeSize.width) + 1,
+                                        height: ceil(badgeSize.height)).fill(using: .clear)
+        badge.draw(at: badgeOrigin, withAttributes: badgeAttributes)
+        if let percent, let progress {
+            let track = NSRect(x: 0, y: 0, width: 15, height: 2.5)
+            NSColor.black.withAlphaComponent(0.3).setFill()
+            NSBezierPath(roundedRect: track, xRadius: 1.25, yRadius: 1.25).fill()
+            let filled = 15 * CGFloat(min(max(percent, 0), 100)) / 100
+            if filled > 0 {
+                NSColor.black.setFill()
+                NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: max(filled, 2.5), height: 2.5),
+                             xRadius: 1.25, yRadius: 1.25).fill()
+            }
+            progress.draw(at: NSPoint(x: iconWidth + 3, y: (18 - progressSize.height) / 2),
+                          withAttributes: progressAttributes)
+        }
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
+    }
+
+    static func statusItemDescription(percent: Int?, queuedCount: Int) -> String {
+        var description = "iOS Build Manager"
+        if let percent { description += ", building \(min(max(percent, 0), 100)) percent estimated" }
+        if queuedCount > 0 { description += ", \(queuedCount) builds waiting" }
+        return description
     }
 
     /// A template NSImage sized like a native status item glyph — the SwiftUI

@@ -21,6 +21,9 @@ About / Settings screens show the latest 3 entries below.
 - Separate output directories for every project and request, preventing IPA and
   `latest.ipa` collisions. Successful receipts provide the exact artifact path.
 - Queue status, recent requests, failures, and artifact shortcuts in Builds.
+- A small queue count at the top-right of the menu-bar box icon, visible while
+  requests are waiting. It excludes the active build and stays visible alongside
+  estimated progress for CLI, manual, and scheduled builds.
 
 ### Changed
 

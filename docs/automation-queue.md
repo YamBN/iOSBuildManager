@@ -38,7 +38,10 @@ python3 "$CLI" cancel REQUEST_UUID
 unknown ID, and 2 on timeout. A timeout does not cancel the build. `cancel` only
 cancels waiting jobs and returns its own command ID; inspect that command's
 status to confirm acceptance. Use the existing app Cancel button for an active
-build. Queue status is also visible in the Builds screen.
+build. Queue status is also visible in the Builds screen. A small number at the top-right
+of the menu-bar box shows waiting jobs (excluding the active build). It disappears
+when there are none. CLI, manual, and scheduled builds all show the same estimated
+percentage while building; the waiting count and percentage can appear together.
 
 For a configured project, pass `--project-id UUID` instead of `--project`.
 A path request registers a new project if needed. Scheme and configuration

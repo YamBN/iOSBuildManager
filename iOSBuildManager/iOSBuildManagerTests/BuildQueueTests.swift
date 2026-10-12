@@ -190,15 +190,21 @@ final class BuildQueueTests: XCTestCase {
             ids.append(try XCTUnwrap(UUID(uuidString: try XCTUnwrap(response["id"]))))
         }
         model.buildQueue.start(poll: false)
+        var sawCLIProgress = false
+        var sawWaitingBadge = false
         let deadline = Date().addingTimeInterval(120)
         while Date() < deadline {
             model.buildQueue.tick()
+            sawCLIProgress = sawCLIProgress || model.buildPercent != nil
+            sawWaitingBadge = sawWaitingBadge || model.buildQueue.pendingCount > 0
             let jobs = model.buildQueue.state.jobs.filter { ids.contains($0.id) }
             if jobs.count == 3 && jobs.allSatisfy({ ["failed", "succeeded", "rejected"].contains($0.state) }) { break }
             try await Task.sleep(nanoseconds: 100_000_000)
         }
         let jobs = ids.compactMap { id in model.buildQueue.state.jobs.first { $0.id == id } }
         XCTAssertEqual(jobs.map(\.state), ["failed", "succeeded", "succeeded"], model.engine.lastError ?? "")
+        XCTAssertTrue(sawCLIProgress, "CLI builds must feed the same menu-bar progress as manual builds")
+        XCTAssertTrue(sawWaitingBadge, "Pending CLI jobs must feed the menu-bar waiting count")
         let paths = jobs.compactMap(\.artifactPath)
         XCTAssertEqual(Set(paths).count, 2)
         for path in paths {
